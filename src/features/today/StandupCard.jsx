@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { Spinner } from '../../components/Spinner.jsx'
+import { TaskStatusBadge } from '../../components/TaskStatusBadge.jsx'
+import { resolveProfileName } from '../../lib/profile.js'
 
 export function StandupCard({
   loading,
@@ -8,6 +11,8 @@ export function StandupCard({
   onSubmit,
   greetingName,
   getGreeting,
+  blockerTaskMap = {},
+  profiles = [],
 }) {
   const [editMode, setEditMode] = useState(false)
   const [yesterday, setYesterday] = useState('')
@@ -102,9 +107,11 @@ export function StandupCard({
     }
   }
 
+  const isReadView = existingStandup && !editMode
+
   if (loading) {
     return (
-      <div className="animate-pulse space-y-4 rounded-xl border border-slate-100 bg-white p-6 shadow-md">
+      <div className="animate-pulse space-y-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="h-6 w-48 rounded-lg bg-slate-200" />
         <div className="h-24 w-full rounded-xl bg-slate-100" />
         <div className="h-24 w-full rounded-xl bg-slate-100" />
@@ -115,8 +122,8 @@ export function StandupCard({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-md hover:shadow-lg transition ring-1 ring-black/[0.02]">
-      <div className="border-b border-slate-100 bg-gradient-to-r from-blue-50/50 to-white px-6 py-5">
+    <div className={`overflow-hidden flex flex-col h-full rounded-2xl border border-slate-200/60 bg-white shadow-sm hover:shadow-md transition ring-1 ring-black/[0.02] ${isReadView ? 'border-l-[3px] border-l-indigo-400' : ''}`}>
+      <div className="border-b border-slate-100 bg-gradient-to-r from-blue-50/50 to-white px-6 py-5 shrink-0">
         <h2 className="text-base font-semibold text-slate-900">
           {getGreeting()}, {greetingName} 👋
         </h2>
@@ -150,13 +157,38 @@ export function StandupCard({
                     } catch {
                       parsed = [existingStandup.blockers]
                     }
-                    return parsed.map((b, i) => (
-                      <div key={i} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-amber-900">
+                    return parsed.map((b, i) => {
+                      const linkedTasks = blockerTaskMap?.[existingStandup.id]?.[b] ?? []
+                      return (
+                      <div key={i} className="overflow-hidden rounded-xl border border-amber-200 bg-amber-50 flex flex-col h-full">
+                        <p className="whitespace-pre-wrap px-3 py-2.5 text-sm leading-relaxed text-amber-900">
                           {b}
                         </p>
+                        <div className="border-t border-amber-200/70 bg-amber-50/80 px-3 py-2 flex flex-col gap-2 mt-auto">
+                          {linkedTasks.length > 0 ? (
+                            linkedTasks.map((task) => (
+                              <div key={task.id} className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-amber-800">
+                                    → Picked up by{' '}
+                                    <Link to={`/dashboard/tasks#task-${task.id}`} className="font-medium text-amber-900 hover:underline">
+                                      {resolveProfileName(task.profiles ?? profiles.find(p => p.id === task.user_id))}
+                                    </Link>
+                                  </span>
+                                </div>
+                                <TaskStatusBadge status={task.status} />
+                              </div>
+                            ))
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 ring-1 ring-inset ring-red-600/10">
+                                Open
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    ))
+                    )})
                   })()}
                 </div>
               ) : (

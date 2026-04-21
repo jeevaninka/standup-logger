@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { TaskStatusBadge } from '../../components/TaskStatusBadge.jsx'
 import { Spinner } from '../../components/Spinner.jsx'
 import { EmptyState } from '../../components/EmptyState.jsx'
@@ -53,7 +54,10 @@ function BlockerItem({
             <div key={task.id} className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-amber-800">
-                  → Picked up by <span className="font-medium text-amber-900">{resolveProfileName(task.profiles)}</span>
+                  → Picked up by{' '}
+                  <Link to={`/dashboard/tasks#task-${task.id}`} className="font-medium text-amber-900 hover:underline">
+                    {resolveProfileName(task.profiles)}
+                  </Link>
                 </span>
               </div>
               <TaskStatusBadge status={task.status} />

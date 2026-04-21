@@ -45,7 +45,7 @@ export function MyTasksCard({
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-3 rounded-xl border border-slate-100 bg-white p-6 shadow-md">
+      <div className="animate-pulse space-y-3 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="h-5 w-36 rounded-lg bg-slate-200" />
         <div className="h-10 w-full rounded-xl bg-slate-100" />
         <div className="h-12 w-full rounded-xl bg-slate-100" />
@@ -55,7 +55,7 @@ export function MyTasksCard({
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-md hover:shadow-lg transition ring-1 ring-black/[0.02]">
+    <div className="flex flex-col h-full overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm hover:shadow-md transition ring-1 ring-black/[0.02]">
       <div className="border-b border-slate-100 bg-gradient-to-r from-blue-50/50 to-white px-6 py-5 shrink-0">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-base font-semibold text-slate-900">Today's Tasks</h3>

@@ -449,7 +449,7 @@ export default function History() {
                   </button>
 
                   {!isCollapsed && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
                       {group.entries.map((row) => (
                         <HistoryCard
                           key={row.id}

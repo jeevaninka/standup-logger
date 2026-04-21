@@ -314,6 +314,8 @@ export function TodayPanel() {
             onSubmit={handleStandupSubmit}
             greetingName={greetingName}
             getGreeting={getGreeting}
+            blockerTaskMap={blockerTaskMap}
+            profiles={profiles}
           />
           <MyTasksCard
             loading={tasksLoading}

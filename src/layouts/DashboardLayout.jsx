@@ -24,10 +24,10 @@ const navItems = [
 
 function navClass(isActive) {
   return [
-    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-400/60 focus:ring-offset-2 focus:ring-offset-slate-950',
+    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-400/60 focus:ring-offset-2 focus:ring-offset-slate-950 border-l-2',
     isActive
-      ? 'bg-indigo-500/20 text-indigo-300 shadow-inner'
-      : 'text-slate-400 hover:bg-white/5 hover:text-slate-100',
+      ? 'bg-indigo-500/20 text-indigo-300 shadow-inner border-indigo-400'
+      : 'border-transparent text-slate-400 hover:bg-white/5 hover:text-slate-100',
   ].join(' ')
 }
 
