@@ -16,8 +16,6 @@ export function TeamTodayGrid({
   loading,
   teamRows,
   currentUserId,
-  dateKey,
-  formatDisplayDate,
   convertingBlockerId,
   onConvertBlocker,
   blockerTaskMap = {}
@@ -28,7 +26,7 @@ export function TeamTodayGrid({
         <div className="mb-4 h-7 w-64 rounded-lg bg-slate-200" />
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3].map((k) => (
-            <div key={k} className="h-56 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+            <div key={k} className="h-56 rounded-xl border border-slate-100 bg-white p-5 shadow-md">
               <div className="flex gap-3">
                 <div className="h-10 w-10 rounded-full bg-slate-200" />
                 <div className="flex-1 space-y-2">
@@ -48,11 +46,7 @@ export function TeamTodayGrid({
   }
 
   return (
-    <section className="mt-8 border-t border-slate-100 pt-8">
-      <div className="flex items-baseline gap-3">
-        <h3 className="text-lg font-semibold text-slate-900">Team Today</h3>
-        <span className="text-sm text-slate-400">{formatDisplayDate(dateKey)}</span>
-      </div>
+    <section className="mt-6">
       {teamRows.length === 0 ? (
         <div className="mt-6">
           <EmptyState
@@ -73,7 +67,7 @@ export function TeamTodayGrid({
             return (
               <article
                 key={row.id}
-                className="flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm ring-1 ring-black/[0.03] transition hover:shadow-md"
+                className="flex flex-col overflow-hidden rounded-xl border border-slate-100 bg-white shadow-md ring-1 ring-black/[0.03] transition hover:shadow-lg"
               >
                 {/* Card header */}
                 <div className="flex items-center gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-5 py-4">
@@ -133,18 +127,18 @@ export function TeamTodayGrid({
                                 <span className="inline-flex items-center rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 ring-1 ring-inset ring-red-600/10">
                                   Open
                                 </span>
-                                <button
-                                  type="button"
-                                  disabled={convertingBlockerId === row.id}
-                                  onClick={() => onConvertBlocker(row)}
-                                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-60"
-                                >
-                                  {convertingBlockerId === row.id ? (
-                                    <><Spinner size="sm" className="text-amber-200" /> Adding…</>
-                                  ) : (
-                                    <><IconArrowRight className="h-3.5 w-3.5" /> Convert to task</>
-                                  )}
-                                </button>
+                                  <button
+                                    type="button"
+                                    disabled={convertingBlockerId === row.id}
+                                    onClick={() => onConvertBlocker(row)}
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60"
+                                  >
+                                    {convertingBlockerId === row.id ? (
+                                      <><Spinner size="sm" className="text-blue-200" /> Adding…</>
+                                    ) : (
+                                      <><IconArrowRight className="h-3.5 w-3.5" /> Convert to task</>
+                                    )}
+                                  </button>
                               </div>
                             )}
                           </div>

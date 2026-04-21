@@ -57,7 +57,7 @@ export function StandupCard({
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="animate-pulse space-y-4 rounded-xl border border-slate-100 bg-white p-6 shadow-md">
         <div className="h-6 w-48 rounded-lg bg-slate-200" />
         <div className="h-24 w-full rounded-xl bg-slate-100" />
         <div className="h-24 w-full rounded-xl bg-slate-100" />
@@ -68,8 +68,8 @@ export function StandupCard({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm ring-1 ring-black/[0.04]">
-      <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+    <div className="overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-md hover:shadow-lg transition ring-1 ring-black/[0.02]">
+      <div className="border-b border-slate-100 bg-gradient-to-r from-blue-50/50 to-white px-6 py-5">
         <h2 className="text-base font-semibold text-slate-900">
           {getGreeting()}, {greetingName} 👋
         </h2>
@@ -135,7 +135,7 @@ export function StandupCard({
                   rows={3}
                   value={value}
                   onChange={(e) => setter(e.target.value)}
-                  className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-400/60"
+                  className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/60"
                 />
               </div>
             ))}
@@ -182,7 +182,7 @@ export function StandupCard({
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.99] active:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60"
               >
                 {submitting ? (
                   <><Spinner className="h-4 w-4 text-white" /> Saving…</>

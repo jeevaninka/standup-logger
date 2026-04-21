@@ -11,7 +11,7 @@ import { IconDocument, IconTrash, IconPencil } from '../components/icons/index.j
 import { encryptNote, decryptNote } from '../lib/crypto.js'
 
 const inputFocus =
-  'focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400/80 focus:ring-offset-0'
+  'focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:ring-offset-0'
 
 // ── NoteItem: handles its own edit state ──────────────────────────────────────
 function NoteItem({ note, onDelete, onEdit }) {
@@ -66,7 +66,7 @@ function NoteItem({ note, onDelete, onEdit }) {
             type="button"
             disabled={saving || !editContent.trim()}
             onClick={handleEditSave}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-1 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-60"
           >
             {saving ? <Spinner className="h-3.5 w-3.5 text-white" /> : null}
             Save
@@ -273,7 +273,7 @@ export default function Notes() {
             <button
               type="submit"
               disabled={saving || !draft.trim()}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.99] active:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.99] active:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               {saving ? <Spinner className="h-4 w-4 text-white" /> : null}
               Save

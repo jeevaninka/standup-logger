@@ -13,7 +13,7 @@ import { TASK_STATUSES, nextTaskStatus, statusBadgeClasses, statusLabel } from '
 import { resolveProfileName } from '../lib/profile.js'
 
 const inputFocus =
-  'focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400/80 focus:ring-offset-0'
+  'focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:ring-offset-0'
 
 const SECTIONS = [
   { status: 'todo', label: 'To Do', empty: 'Nothing here yet.' },
@@ -126,7 +126,7 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
             type="button"
             disabled={saving || !editTitle.trim()}
             onClick={handleEditSave}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
           >
             {saving ? <Spinner size="sm" className="text-white" /> : null}
             Save
@@ -213,7 +213,7 @@ export default function Tasks() {
   const [statusUpdatingId, setStatusUpdatingId] = useState(null)
 
   const loadProfiles = useCallback(async () => {
-    const { data } = await supabase.from('profiles').select('id, full_name, display_name')
+    const { data } = await supabase.from('profiles').select('id, full_name')
     if (data) setProfiles(data)
   }, [])
 
@@ -352,7 +352,7 @@ export default function Tasks() {
           <button
             type="button"
             onClick={() => setShowAddForm((v) => !v)}
-            className="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.99] sm:w-auto"
+            className="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.99] sm:w-auto"
           >
             + Add Task
           </button>
@@ -439,7 +439,7 @@ export default function Tasks() {
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
               >
                 {saving ? <Spinner size="sm" className="text-white" /> : null}
                 Save
@@ -485,8 +485,9 @@ export default function Tasks() {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   {SECTIONS.map(({ status, label, empty }) => {
                     const list = grouped[status] ?? []
+                    const topBorder = status === 'todo' ? 'border-t-slate-300' : status === 'in_progress' ? 'border-t-amber-400' : 'border-t-emerald-400'
                     return (
-                      <section key={status} className="flex flex-col rounded-xl border border-slate-200 bg-slate-100/60 p-4 ring-1 ring-slate-200/80">
+                      <section key={status} className={`flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ring-1 ring-slate-200/60 border-t-4 ${topBorder}`}>
                         <div className="mb-4 flex items-center justify-between gap-2">
                           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">{label}</h3>
                           <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-bold text-slate-800">{list.length}</span>

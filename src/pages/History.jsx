@@ -8,7 +8,7 @@ import { IconLink, IconHistory, IconChevronDown, IconChevronRight } from '../com
 import { TaskStatusBadge } from '../components/TaskStatusBadge.jsx'
 
 const inputFocus =
-  'focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400/80 focus:ring-offset-0'
+  'focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:ring-offset-0'
 
 function dayHeading(yyyyMmDd) {
   const d = parseLocalDate(yyyyMmDd)
@@ -26,9 +26,9 @@ function HistoryCard({ row, linkedTasks }) {
   const blockerText = (row.blockers ?? '').trim()
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm ring-1 ring-black/[0.03] transition hover:shadow-md">
+    <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm hover:shadow-md transition ring-1 ring-black/[0.02]">
       {/* Card header */}
-      <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-5 py-4">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-blue-50/50 to-white px-5 py-4">
         <p className="font-semibold text-slate-900">{formatCardDate(row.standup_date)}</p>
         <p className="shrink-0 text-xs font-medium text-slate-500">
           {resolveProfileName(row.profiles)}

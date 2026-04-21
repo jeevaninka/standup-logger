@@ -10,6 +10,7 @@ import { nextTaskStatus } from '../../lib/tasks.js'
 import { StandupCard } from './StandupCard.jsx'
 import { MyTasksCard } from './MyTasksCard.jsx'
 import { TeamTodayGrid } from './TeamTodayGrid.jsx'
+import { IconRefresh } from '../../components/icons/index.jsx'
 
 function formatDisplayDate(dateKey) {
   const [y, m, day] = dateKey.split('-').map(Number)
@@ -174,14 +175,15 @@ export function TodayPanel() {
     return () => { cancelled = true }
   }, [userId, loadProfile, loadMyStandup, loadTasks, loadTeam])
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        loadTeam()
-      }
-    }, 30000)
-    return () => clearInterval(id)
-  }, [loadTeam])
+  const handleRefreshAll = useCallback(async () => {
+    setStandupLoading(true)
+    setTasksLoading(true)
+    setTeamLoading(true)
+    await Promise.all([loadMyStandup(), loadTasks(), loadTeam()])
+    setStandupLoading(false)
+    setTasksLoading(false)
+    setTeamLoading(false)
+  }, [loadMyStandup, loadTasks, loadTeam])
 
   const greetingName = displayName || user?.email?.split('@')[0] || 'there'
 
@@ -297,6 +299,22 @@ export function TodayPanel() {
             onCycleTaskStatus={handleCycleTaskStatus}
           />
         </div>
+        
+        <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-8">
+          <div className="flex items-baseline gap-3">
+            <h3 className="text-lg font-semibold text-slate-900">Team Today</h3>
+            <span className="text-sm text-slate-400">{formatDisplayDate(dateKey)}</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleRefreshAll}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900 active:scale-[0.98]"
+          >
+            <IconRefresh className="h-4 w-4" />
+            Refresh
+          </button>
+        </div>
+
         <TeamTodayGrid
           loading={teamLoading}
           teamRows={teamRows}
