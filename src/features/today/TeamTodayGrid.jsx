@@ -134,7 +134,6 @@ function BlockerItem({
 }
 
 function TeamStandupCard({ row, currentUserId, convertingBlockerId, onConvertBlocker, blockerTaskMap, profiles }) {
-  const [isExpanded, setIsExpanded] = useState(false)
   const name = resolveProfileName(row.profiles) || 'Teammate'
   const initials = getInitials(name, '')
   const isOwnStandup = row.user_id === currentUserId
@@ -169,11 +168,11 @@ function TeamStandupCard({ row, currentUserId, convertingBlockerId, onConvertBlo
       </div>
 
       {/* Card body */}
-      <dl className="flex-1 flex flex-col space-y-3 px-5 py-4 text-sm">
+      <dl className="flex-1 flex flex-col space-y-4 px-5 py-4 text-sm">
         {/* Yesterday */}
         <div>
           <dt className="mb-0.5 text-xs font-semibold uppercase tracking-widest text-slate-400">Yesterday</dt>
-          <dd className={`whitespace-pre-wrap leading-relaxed text-slate-700 ${isExpanded ? '' : 'line-clamp-2'}`}>
+          <dd className="whitespace-pre-wrap leading-relaxed text-slate-700">
             {row.yesterday_work?.trim() || '—'}
           </dd>
         </div>
@@ -181,7 +180,7 @@ function TeamStandupCard({ row, currentUserId, convertingBlockerId, onConvertBlo
         {/* Today */}
         <div>
           <dt className="mb-0.5 text-xs font-semibold uppercase tracking-widest text-slate-400">Today</dt>
-          <dd className={`whitespace-pre-wrap leading-relaxed text-slate-700 ${isExpanded ? '' : 'line-clamp-2'}`}>
+          <dd className="whitespace-pre-wrap leading-relaxed text-slate-700">
             {row.today_work?.trim() || '—'}
           </dd>
         </div>
@@ -212,17 +211,6 @@ function TeamStandupCard({ row, currentUserId, convertingBlockerId, onConvertBlo
               </span>
             )}
           </dd>
-        </div>
-        
-        {/* Show more toggle */}
-        <div className="pt-1 mt-auto">
-          <button
-            type="button"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition focus:outline-none focus:underline"
-          >
-            {isExpanded ? 'Show less' : 'Show more'}
-          </button>
         </div>
       </dl>
     </article>

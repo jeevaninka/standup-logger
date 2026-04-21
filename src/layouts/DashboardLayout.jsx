@@ -1,7 +1,8 @@
-import { createElement } from 'react'
+import { createElement, useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { getInitials } from '../lib/profile.js'
+import { supabase } from '../lib/supabase.js'
 import {
   IconToday,
   IconTasks,
@@ -49,9 +50,18 @@ export default function DashboardLayout() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
 
+  const [profile, setProfile] = useState(null)
+
+  useEffect(() => {
+    if (!user?.id) return
+    supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single().then(({ data }) => {
+      if (data) setProfile(data)
+    })
+  }, [user?.id])
+
   const meta = user?.user_metadata ?? {}
-  const displayName = meta.full_name || meta.name || user?.email || ''
-  const avatarUrl = meta.avatar_url ?? ''
+  const displayName = profile?.full_name || meta.full_name || meta.name || user?.email || ''
+  const avatarUrl = profile?.avatar_url || meta.avatar_url || ''
   const avatarInitials = getInitials(displayName, user?.email || '')
 
   async function handleSignOut() {

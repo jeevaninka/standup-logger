@@ -65,9 +65,18 @@ export default function Profile() {
   // Keep local state in sync if auth user refreshes
    
   useEffect(() => {
+    if (!user?.id) return
     const m = user?.user_metadata ?? {}
     setDisplayName(m.full_name ?? m.name ?? '')
     setAvatarUrl(m.avatar_url ?? '')
+
+    // Also fetch from profiles table to get the true custom avatar URL if one exists
+    supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single().then(({ data }) => {
+      if (data) {
+        if (data.full_name) setDisplayName(data.full_name)
+        if (data.avatar_url) setAvatarUrl(data.avatar_url)
+      }
+    })
   }, [user])
 
   // ── Avatar upload ────────────────────────────────────────────────────────
@@ -95,10 +104,10 @@ export default function Profile() {
       const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
       const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`
 
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: { avatar_url: publicUrl },
-      })
+      const { error: updateError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id)
       if (updateError) throw updateError
+
+      await supabase.auth.updateUser({ data: { avatar_url: publicUrl } })
 
       setAvatarUrl(publicUrl)
       logger.info('avatar updated', { userId: user.id })
@@ -116,8 +125,10 @@ export default function Profile() {
     if (!user) return
     setAvatarUploading(true)
     try {
-      const { error } = await supabase.auth.updateUser({ data: { avatar_url: '' } })
+      const { error } = await supabase.from('profiles').update({ avatar_url: '' }).eq('id', user.id)
       if (error) throw error
+      await supabase.auth.updateUser({ data: { avatar_url: '' } })
+      
       setAvatarUrl('')
       showToast('Avatar removed', 'success')
     } catch (err) {
@@ -134,8 +145,10 @@ export default function Profile() {
     if (!user) return
     setProfileSaving(true)
     try {
-      const { error } = await supabase.auth.updateUser({ data: { full_name: name } })
+      const { error } = await supabase.from('profiles').update({ full_name: name }).eq('id', user.id)
       if (error) throw error
+      await supabase.auth.updateUser({ data: { full_name: name } })
+      
       logger.info('display name updated', { userId: user.id })
       showToast('Profile updated', 'success')
     } catch (err) {

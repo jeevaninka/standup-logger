@@ -7,14 +7,14 @@ import { logger } from '../lib/logger.js'
 import { supabase } from '../lib/supabase.js'
 import { Spinner } from '../components/Spinner.jsx'
 import { formatRelativeTime, isoToLocalDateKey } from '../lib/date.js'
-import { IconDocument, IconTrash, IconPencil } from '../components/icons/index.jsx'
+import { IconDocument, IconTrash, IconPencil, IconPin } from '../components/icons/index.jsx'
 import { encryptNote, decryptNote } from '../lib/crypto.js'
 
 const inputFocus =
   'focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:ring-offset-0'
 
 // ── NoteItem: handles its own edit state ──────────────────────────────────────
-function NoteItem({ note, onDelete, onEdit }) {
+function NoteItem({ note, onDelete, onEdit, onTogglePin }) {
   const [editing, setEditing] = useState(false)
   const [editContent, setEditContent] = useState(note.content ?? '')
   const [saving, setSaving] = useState(false)
@@ -79,10 +79,12 @@ function NoteItem({ note, onDelete, onEdit }) {
   }
 
   return (
-    <li className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm ring-1 ring-slate-100">
+    <li className={`rounded-xl border bg-white p-5 shadow-sm ring-1 transition ${note.is_pinned ? 'border-amber-200 ring-amber-100' : 'border-slate-200 ring-slate-100'}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="whitespace-pre-wrap text-slate-900">{note.content ?? ''}</p>
+          <div className="max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+            <p className="whitespace-pre-wrap text-slate-900">{note.content ?? ''}</p>
+          </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <time
               className="text-xs text-slate-500"
@@ -98,7 +100,15 @@ function NoteItem({ note, onDelete, onEdit }) {
             ) : null}
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1 flex-col sm:flex-row">
+          <button
+            type="button"
+            onClick={() => onTogglePin(note)}
+            className={`rounded-lg p-1.5 transition focus:outline-none focus:ring-2 focus:ring-slate-300 ${note.is_pinned ? 'text-amber-500 hover:bg-amber-50' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'}`}
+            aria-label={note.is_pinned ? "Unpin note" : "Pin note"}
+          >
+            <IconPin className="h-4 w-4" filled={note.is_pinned} />
+          </button>
           <button
             type="button"
             onClick={handleEditOpen}
@@ -110,10 +120,10 @@ function NoteItem({ note, onDelete, onEdit }) {
           <button
             type="button"
             onClick={() => onDelete(note)}
-            className="rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600 active:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
+            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 active:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
             aria-label="Delete note"
           >
-            <IconTrash className="h-5 w-5" />
+            <IconTrash className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -140,8 +150,9 @@ export default function Notes() {
     if (!userId) return
     const { data, error: fetchError } = await supabase
       .from('notes')
-      .select('id, content, created_at, standup_id')
+      .select('id, content, created_at, standup_id, is_pinned')
       .eq('user_id', userId)
+      .order('is_pinned', { ascending: false })
       .order('created_at', { ascending: false })
     if (fetchError) {
       setError(fetchError.message)
@@ -190,7 +201,7 @@ export default function Notes() {
     const { data, error: insertError } = await supabase
       .from('notes')
       .insert({ user_id: userId, content: encryptedContent })
-      .select('id, content, created_at, standup_id')
+      .select('id, content, created_at, standup_id, is_pinned')
       .single()
     setSaving(false)
     if (insertError) {
@@ -238,6 +249,30 @@ export default function Notes() {
     setError('')
   }
   // ─────────────────────────────────────────────────────────────────────────
+
+  async function handleTogglePin(note) {
+    const newPinned = !note.is_pinned
+    const { error: updateError } = await supabase
+      .from('notes')
+      .update({ is_pinned: newPinned })
+      .eq('id', note.id)
+      .eq('user_id', userId)
+    
+    if (updateError) {
+      showToast('Failed to pin note', 'error')
+      return
+    }
+
+    setNotes((prev) => {
+      const updated = prev.map((n) => (n.id === note.id ? { ...n, is_pinned: newPinned } : n))
+      return updated.sort((a, b) => {
+        if (a.is_pinned === b.is_pinned) {
+          return new Date(b.created_at) - new Date(a.created_at)
+        }
+        return a.is_pinned ? -1 : 1
+      })
+    })
+  }
 
   const hasFilters = search.trim() || dateFilter
 
@@ -355,6 +390,7 @@ export default function Notes() {
                   note={note}
                   onDelete={handleDelete}
                   onEdit={handleEdit}
+                  onTogglePin={handleTogglePin}
                 />
               ))}
             </ul>
