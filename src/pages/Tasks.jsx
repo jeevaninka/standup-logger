@@ -169,7 +169,7 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
   }
 
   return (
-    <article className={`relative flex flex-col rounded-2xl border p-4 shadow-sm ring-1 transition-all duration-200 ${isFromBlocker ? 'bg-amber-100 border-l-4 border-l-amber-400 border-amber-200 ring-amber-100' : task.task_type === 'bug' ? 'bg-red-50 border-l-4 border-l-red-400 border-red-200 ring-red-100' : 'bg-white border-slate-200 ring-slate-100'} ${isExpanded ? 'h-auto' : 'h-[160px] overflow-hidden'}`}>
+    <article id={`task-${task.id}`} className={`relative flex flex-col rounded-2xl border p-4 shadow-sm ring-1 transition-all duration-200 ${isFromBlocker ? 'bg-amber-100 border-l-4 border-l-amber-400 border-amber-200 ring-amber-100' : task.task_type === 'bug' ? 'bg-red-50 border-l-4 border-l-red-400 border-red-200 ring-red-100' : 'bg-white border-slate-200 ring-slate-100'} ${isExpanded ? 'h-auto' : ''}`}>
       {isFromBlocker && (
         <div className="mb-2 flex items-center gap-1.5 shrink-0">
           <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
@@ -194,7 +194,7 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
               </span>
             )}
           </div>
-          <h3 className="font-medium text-slate-900 break-words leading-tight">{task.title}</h3>
+          <h3 className={`font-medium text-slate-900 break-words leading-tight ${isExpanded ? '' : 'line-clamp-2'}`}>{task.title}</h3>
         </div>
         {isOwnTask && (
           <div className="flex shrink-0 items-center gap-1">

@@ -18,6 +18,7 @@ function NoteItem({ note, onDelete, onEdit, onTogglePin }) {
   const [editing, setEditing] = useState(false)
   const [editContent, setEditContent] = useState(note.content ?? '')
   const [saving, setSaving] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   // Sync if parent updates note externally
    
@@ -79,11 +80,11 @@ function NoteItem({ note, onDelete, onEdit, onTogglePin }) {
   }
 
   return (
-    <li className={`rounded-xl border bg-white p-5 shadow-sm ring-1 transition ${note.is_pinned ? 'border-amber-200 ring-amber-100' : 'border-slate-200 ring-slate-100'}`}>
+    <li className={`flex flex-col rounded-xl border bg-white p-5 shadow-sm ring-1 transition ${note.is_pinned ? 'border-amber-200 ring-amber-100' : 'border-slate-200 ring-slate-100'}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-            <p className="whitespace-pre-wrap text-slate-900">{note.content ?? ''}</p>
+          <div className="pr-2">
+            <p className={`whitespace-pre-wrap text-slate-900 ${isExpanded ? '' : 'line-clamp-6'}`}>{note.content ?? ''}</p>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <time
@@ -127,6 +128,17 @@ function NoteItem({ note, onDelete, onEdit, onTogglePin }) {
           </button>
         </div>
       </div>
+      {(note.content ?? '').split('\n').length > 6 || (note.content ?? '').length > 300 ? (
+        <div className="mt-3 pt-2 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition focus:outline-none focus:underline"
+          >
+            {isExpanded ? 'Show less' : 'Show more'}
+          </button>
+        </div>
+      ) : null}
     </li>
   )
 }

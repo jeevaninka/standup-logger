@@ -1,4 +1,5 @@
-import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { ToastProvider } from './components/Toast.jsx'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 import { Spinner } from './components/Spinner.jsx'
@@ -11,6 +12,23 @@ import Notes from './pages/Notes.jsx'
 import Signup from './pages/Signup.jsx'
 import Tasks from './pages/Tasks.jsx'
 import Profile from './pages/Profile.jsx'
+
+function ScrollToHash() {
+  const { hash } = useLocation()
+  useEffect(() => {
+    if (hash) {
+      const id = hash.replace('#', '')
+      const el = document.getElementById(id)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' })
+        // Add a temporary highlight effect
+        el.classList.add('ring-4', 'ring-indigo-400')
+        setTimeout(() => el.classList.remove('ring-4', 'ring-indigo-400'), 2000)
+      }
+    }
+  }, [hash])
+  return null
+}
 
 function ProtectedRoute() {
   const { session, loading } = useAuth()
@@ -34,7 +52,8 @@ export default function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-      <Routes>
+        <ScrollToHash />
+        <Routes>
         <Route path="/" element={<Navigate to="/dashboard/today" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
