@@ -1,0 +1,11 @@
+import { statusBadgeClasses, statusLabel } from '../lib/tasks.js'
+
+export function TaskStatusBadge({ status, className = '' }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadgeClasses(status)} ${className}`}
+    >
+      {statusLabel(status)}
+    </span>
+  )
+}
