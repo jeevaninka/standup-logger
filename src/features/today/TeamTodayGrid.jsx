@@ -133,20 +133,18 @@ export function TeamTodayGrid({
                                 <span className="inline-flex items-center rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 ring-1 ring-inset ring-red-600/10">
                                   Open
                                 </span>
-                                {!isOwnStandup && (
-                                  <button
-                                    type="button"
-                                    disabled={convertingBlockerId === row.id}
-                                    onClick={() => onConvertBlocker(row)}
-                                    className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-60"
-                                  >
-                                    {convertingBlockerId === row.id ? (
-                                      <><Spinner size="sm" className="text-amber-200" /> Adding…</>
-                                    ) : (
-                                      <><IconArrowRight className="h-3.5 w-3.5" /> Convert to task</>
-                                    )}
-                                  </button>
-                                )}
+                                <button
+                                  type="button"
+                                  disabled={convertingBlockerId === row.id}
+                                  onClick={() => onConvertBlocker(row)}
+                                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-60"
+                                >
+                                  {convertingBlockerId === row.id ? (
+                                    <><Spinner size="sm" className="text-amber-200" /> Adding…</>
+                                  ) : (
+                                    <><IconArrowRight className="h-3.5 w-3.5" /> Convert to task</>
+                                  )}
+                                </button>
                               </div>
                             )}
                           </div>

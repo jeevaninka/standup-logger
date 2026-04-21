@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase.js'
 import { Spinner } from '../components/Spinner.jsx'
 import { formatRelativeTime, isoToLocalDateKey } from '../lib/date.js'
 import { IconDocument, IconTrash, IconPencil } from '../components/icons/index.jsx'
+import { encryptNote, decryptNote } from '../lib/crypto.js'
 
 const inputFocus =
   'focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400/80 focus:ring-offset-0'
@@ -152,8 +153,12 @@ export default function Notes() {
       setNotes([])
       return
     }
+    // Decrypt all notes
+    const decrypted = await Promise.all(
+      (data ?? []).map(async (n) => ({ ...n, content: await decryptNote(n.content) }))
+    )
     setError('')
-    setNotes(data ?? [])
+    setNotes(decrypted)
   }, [userId])
 
   useEffect(() => {
@@ -186,9 +191,10 @@ export default function Notes() {
     const content = draft.trim()
     if (!content || !userId) return
     setSaving(true)
+    const encryptedContent = await encryptNote(content)
     const { data, error: insertError } = await supabase
       .from('notes')
-      .insert({ user_id: userId, content })
+      .insert({ user_id: userId, content: encryptedContent })
       .select('id, content, created_at, standup_id')
       .single()
     setSaving(false)
@@ -199,7 +205,8 @@ export default function Notes() {
     }
     if (data) {
       logger.info('note saved', { userId })
-      setNotes((prev) => [data, ...prev])
+      // Store decrypted version locally so UI shows plaintext immediately
+      setNotes((prev) => [{ ...data, content }, ...prev])
       setDraft('')
       setError('')
       showToast('Note saved', 'success')
@@ -219,9 +226,10 @@ export default function Notes() {
 
   // ── NEW: inline edit save ─────────────────────────────────────────────────
   async function handleEdit(note, content) {
+    const encryptedContent = await encryptNote(content)
     const { error: updateError } = await supabase
       .from('notes')
-      .update({ content })
+      .update({ content: encryptedContent })
       .eq('id', note.id)
       .eq('user_id', userId)
     if (updateError) {
