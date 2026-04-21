@@ -178,13 +178,21 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
       )}
 
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1 flex items-start gap-2">
-          {task.task_type === 'bug' && (
-            <span className="mt-0.5 flex shrink-0 items-center justify-center rounded bg-red-100 p-0.5 text-red-600" title="Bug">
-              <IconBug className="h-3.5 w-3.5" />
-            </span>
-          )}
-          <h3 className="font-medium text-slate-900 break-words">{task.title}</h3>
+        <div className="min-w-0 flex-1 flex flex-col items-start gap-1">
+          <div className="flex items-center gap-2">
+            {task.task_type === 'bug' ? (
+              <span className="flex shrink-0 items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-600" title="Bug">
+                <IconBug className="h-3 w-3" />
+                Bug
+              </span>
+            ) : (
+              <span className="flex shrink-0 items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500" title="Task">
+                <IconClipboard className="h-3 w-3" />
+                Task
+              </span>
+            )}
+          </div>
+          <h3 className="font-medium text-slate-900 break-words leading-tight">{task.title}</h3>
         </div>
         {isOwnTask && (
           <div className="flex shrink-0 items-center gap-1">

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { TaskStatusBadge } from '../../components/TaskStatusBadge.jsx'
 import { Spinner } from '../../components/Spinner.jsx'
 import { EmptyState } from '../../components/EmptyState.jsx'
-import { IconUsers, IconLink, IconArrowRight } from '../../components/icons/index.jsx'
+import { IconUsers, IconLink, IconArrowRight, IconChevronDown, IconChevronRight } from '../../components/icons/index.jsx'
 import { resolveProfileName, getInitials } from '../../lib/profile.js'
 
 const inputFocus =
@@ -134,8 +134,10 @@ function BlockerItem({
 }
 
 function TeamStandupCard({ row, currentUserId, convertingBlockerId, onConvertBlocker, blockerTaskMap, profiles }) {
+  const [isExpanded, setIsExpanded] = useState(false)
   const name = resolveProfileName(row.profiles) || 'Teammate'
   const initials = getInitials(name, '')
+  const avatarUrl = row.profiles?.avatar_url || ''
   const isOwnStandup = row.user_id === currentUserId
   
   let parsedBlockers = []
@@ -152,67 +154,82 @@ function TeamStandupCard({ row, currentUserId, convertingBlockerId, onConvertBlo
   return (
     <article className="flex flex-col overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-md ring-1 ring-black/[0.02] transition hover:shadow-lg">
       {/* Card header */}
-      <div className="flex items-center gap-3 border-b border-slate-100 bg-gradient-to-r from-blue-50/50 to-white px-5 py-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white">
-          {initials}
+      <button 
+        type="button" 
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex w-full items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-blue-50/50 to-white px-5 py-4 focus:outline-none focus:bg-blue-50/50 transition text-left"
+      >
+        <div className="flex items-center gap-3">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-white/10" />
+          ) : (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white">
+              {initials}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-900">{name}</p>
+            <p className="text-xs text-slate-400">Submitted {formatSubmittedTime(row.submitted_at)}</p>
+          </div>
+          {isOwnStandup && (
+            <span className="shrink-0 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600 ring-1 ring-indigo-200/80">
+              You
+            </span>
+          )}
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-slate-900">{name}</p>
-          <p className="text-xs text-slate-400">Submitted {formatSubmittedTime(row.submitted_at)}</p>
+        <div className="text-slate-400 shrink-0">
+          {isExpanded ? <IconChevronDown className="h-5 w-5" /> : <IconChevronRight className="h-5 w-5" />}
         </div>
-        {isOwnStandup && (
-          <span className="shrink-0 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600 ring-1 ring-indigo-200/80">
-            You
-          </span>
-        )}
-      </div>
+      </button>
 
       {/* Card body */}
-      <dl className="flex-1 flex flex-col space-y-4 px-5 py-4 text-sm">
-        {/* Yesterday */}
-        <div>
-          <dt className="mb-0.5 text-xs font-semibold uppercase tracking-widest text-slate-400">Yesterday</dt>
-          <dd className="whitespace-pre-wrap leading-relaxed text-slate-700">
-            {row.yesterday_work?.trim() || '—'}
-          </dd>
-        </div>
+      {isExpanded && (
+        <dl className="flex-1 flex flex-col space-y-4 px-5 py-4 text-sm">
+          {/* Yesterday */}
+          <div>
+            <dt className="mb-0.5 text-xs font-semibold uppercase tracking-widest text-slate-400">Yesterday</dt>
+            <dd className="whitespace-pre-wrap leading-relaxed text-slate-700">
+              {row.yesterday_work?.trim() || '—'}
+            </dd>
+          </div>
 
-        {/* Today */}
-        <div>
-          <dt className="mb-0.5 text-xs font-semibold uppercase tracking-widest text-slate-400">Today</dt>
-          <dd className="whitespace-pre-wrap leading-relaxed text-slate-700">
-            {row.today_work?.trim() || '—'}
-          </dd>
-        </div>
+          {/* Today */}
+          <div>
+            <dt className="mb-0.5 text-xs font-semibold uppercase tracking-widest text-slate-400">Today</dt>
+            <dd className="whitespace-pre-wrap leading-relaxed text-slate-700">
+              {row.today_work?.trim() || '—'}
+            </dd>
+          </div>
 
-        {/* Blockers */}
-        <div>
-          <dt className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-amber-500">Blockers</dt>
-          <dd>
-            {parsedBlockers.length > 0 ? (
-              <div className="flex flex-col gap-2">
-                {parsedBlockers.map((b, i) => (
-                  <BlockerItem
-                    key={i}
-                    standupId={row.id}
-                    blockerText={b}
-                    linkedTasks={blockerTaskMap[row.id]?.[b] ?? []}
-                    currentUserId={currentUserId}
-                    convertingBlockerId={convertingBlockerId}
-                    onConvertBlocker={onConvertBlocker}
-                    profiles={profiles}
-                  />
-                ))}
-              </div>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200/80">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                No blockers
-              </span>
-            )}
-          </dd>
-        </div>
-      </dl>
+          {/* Blockers */}
+          <div>
+            <dt className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-amber-500">Blockers</dt>
+            <dd>
+              {parsedBlockers.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {parsedBlockers.map((b, i) => (
+                    <BlockerItem
+                      key={i}
+                      standupId={row.id}
+                      blockerText={b}
+                      linkedTasks={blockerTaskMap[row.id]?.[b] ?? []}
+                      currentUserId={currentUserId}
+                      convertingBlockerId={convertingBlockerId}
+                      onConvertBlocker={onConvertBlocker}
+                      profiles={profiles}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200/80">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  No blockers
+                </span>
+              )}
+            </dd>
+          </div>
+        </dl>
+      )}
     </article>
   )
 }

@@ -54,7 +54,7 @@ export function TodayPanel() {
   const userId = user?.id
 
   const loadProfileList = useCallback(async () => {
-    const { data } = await supabase.from('profiles').select('id, full_name')
+    const { data } = await supabase.from('profiles').select('id, full_name, avatar_url')
     if (data) setProfiles(data)
   }, [])
 
@@ -107,7 +107,7 @@ export function TodayPanel() {
     const { data, error } = await supabase
       .from('standups')
       .select(
-        `id, user_id, yesterday_work, today_work, blockers, submitted_at, profiles ( full_name )`,
+        `id, user_id, yesterday_work, today_work, blockers, submitted_at, profiles ( full_name, avatar_url )`,
       )
       .eq('standup_date', dateKey)
       .order('submitted_at', { ascending: true })
@@ -122,7 +122,7 @@ export function TodayPanel() {
       if (blockerStandupIds.length > 0) {
         const { data: taskData } = await supabase
           .from('tasks')
-          .select('id, title, status, blocker_source_id, user_id, profiles!tasks_user_id_fkey ( full_name )')
+          .select('id, title, status, blocker_source_id, blocker_item_id, user_id, profiles!tasks_user_id_fkey ( full_name, avatar_url )')
           .in('blocker_source_id', blockerStandupIds)
           .order('id', { ascending: true })
         if (taskData) allBlockerTasks = allBlockerTasks.concat(taskData)
@@ -132,7 +132,7 @@ export function TodayPanel() {
       // (This helps catch tasks added before the blocker_source_id column was reliably populated)
       const { data: fallbackTasks } = await supabase
         .from('tasks')
-        .select('id, title, status, blocker_source_id, user_id, profiles!tasks_user_id_fkey ( full_name )')
+        .select('id, title, status, blocker_source_id, blocker_item_id, user_id, profiles!tasks_user_id_fkey ( full_name, avatar_url )')
         .eq('task_date', dateKey)
         .is('blocker_source_id', null)
         .like('title', '[Blocker]%')

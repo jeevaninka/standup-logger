@@ -3,7 +3,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 import { EmptyState } from '../components/EmptyState.jsx'
 import { supabase } from '../lib/supabase.js'
 import { parseLocalDate, formatCardDate } from '../lib/date.js'
-import { resolveProfileName } from '../lib/profile.js'
+import { resolveProfileName, getInitials } from '../lib/profile.js'
 import { IconLink, IconHistory, IconChevronDown, IconChevronRight } from '../components/icons/index.jsx'
 import { TaskStatusBadge } from '../components/TaskStatusBadge.jsx'
 
@@ -50,12 +50,19 @@ function HistoryCard({ row, linkedTasks, defaultExpanded }) {
         className="flex w-full items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-blue-50/50 to-white px-5 py-4 focus:outline-none focus:bg-blue-50/50 transition text-left"
       >
         <div className="flex items-center gap-3">
-          <p className="font-semibold text-slate-900">{formatCardDate(row.standup_date)}</p>
-          <p className="shrink-0 text-xs font-medium text-slate-500">
-            {resolveProfileName(row.profiles)}
-          </p>
+          {row.profiles?.avatar_url ? (
+            <img src={row.profiles.avatar_url} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-white/10" />
+          ) : (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white">
+              {getInitials(resolveProfileName(row.profiles), '')}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-900">{resolveProfileName(row.profiles)}</p>
+            <p className="text-xs text-slate-400">{formatCardDate(row.standup_date)}</p>
+          </div>
         </div>
-        <div className="text-slate-400">
+        <div className="text-slate-400 shrink-0">
           {isExpanded ? <IconChevronDown className="h-5 w-5" /> : <IconChevronRight className="h-5 w-5" />}
         </div>
       </button>
@@ -158,7 +165,7 @@ export default function History() {
         yesterday_work,
         today_work,
         blockers,
-        profiles ( full_name ),
+        profiles ( full_name, avatar_url ),
         notes ( id, content, created_at )
       `)
       .order('standup_date', { ascending: false })

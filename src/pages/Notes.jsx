@@ -354,8 +354,8 @@ export default function Notes() {
           </div>
 
           {loading ? (
-            <ul className="mt-6 space-y-4">
-              {[1, 2, 3].map((k) => (
+            <ul className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((k) => (
                 <li key={k} className="animate-pulse rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                   <div className="h-4 max-w-[75%] rounded bg-slate-200" />
                   <div className="mt-3 h-4 w-full rounded bg-slate-100" />
@@ -383,7 +383,7 @@ export default function Notes() {
               />
             </div>
           ) : (
-            <ul className="mt-6 space-y-4">
+            <ul className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {filteredNotes.map((note) => (
                 <NoteItem
                   key={note.id}

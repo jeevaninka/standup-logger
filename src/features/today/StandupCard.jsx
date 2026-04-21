@@ -17,7 +17,8 @@ export function StandupCard({
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (existingStandup && !editMode) {
+    if (loading) return
+    if (existingStandup) {
       setYesterday(existingStandup.yesterday_work ?? '')
       setTodayPlans(existingStandup.today_work ?? '')
       const blockerText = existingStandup.blockers?.trim() ?? ''
@@ -32,10 +33,15 @@ export function StandupCard({
       } catch {
         setBlockersList(blockerText ? [blockerText] : [''])
       }
-    } else if (!existingStandup) {
+      setEditMode(false)
+    } else {
+      setYesterday('')
+      setTodayPlans('')
+      setHasBlocker(false)
+      setBlockersList([''])
       setEditMode(true)
     }
-  }, [existingStandup, editMode])
+  }, [existingStandup, loading])
 
   function handleToggleBlocker(val) {
     setHasBlocker(val)
