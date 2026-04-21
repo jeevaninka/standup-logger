@@ -22,76 +22,107 @@ function dayKeyFromDate(yyyyMmDd) {
 
 // ── Card Component ────────────────────────────────────────────────────────────
 
-function HistoryCard({ row, linkedTasks }) {
+function HistoryCard({ row, linkedTasks, defaultExpanded }) {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded)
+
+  useEffect(() => {
+    setIsExpanded(defaultExpanded)
+  }, [defaultExpanded])
+
   const blockerText = (row.blockers ?? '').trim()
+  
+  let parsedBlockers = []
+  if (blockerText) {
+    try {
+      parsedBlockers = JSON.parse(blockerText)
+      if (!Array.isArray(parsedBlockers)) parsedBlockers = [blockerText]
+    } catch {
+      parsedBlockers = [blockerText]
+    }
+  }
 
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm hover:shadow-md transition ring-1 ring-black/[0.02]">
       {/* Card header */}
-      <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-blue-50/50 to-white px-5 py-4">
-        <p className="font-semibold text-slate-900">{formatCardDate(row.standup_date)}</p>
-        <p className="shrink-0 text-xs font-medium text-slate-500">
-          {resolveProfileName(row.profiles)}
-        </p>
-      </div>
+      <button 
+        type="button" 
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex w-full items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-blue-50/50 to-white px-5 py-4 focus:outline-none focus:bg-blue-50/50 transition text-left"
+      >
+        <div className="flex items-center gap-3">
+          <p className="font-semibold text-slate-900">{formatCardDate(row.standup_date)}</p>
+          <p className="shrink-0 text-xs font-medium text-slate-500">
+            {resolveProfileName(row.profiles)}
+          </p>
+        </div>
+        <div className="text-slate-400">
+          {isExpanded ? <IconChevronDown className="h-5 w-5" /> : <IconChevronRight className="h-5 w-5" />}
+        </div>
+      </button>
 
       {/* Card body */}
-      <dl className="flex-1 space-y-3 px-5 py-4 text-sm">
-        {/* Yesterday */}
-        <div>
-          <dt className="mb-0.5 text-xs font-semibold uppercase tracking-widest text-slate-400">Yesterday</dt>
-          <dd className="whitespace-pre-wrap leading-relaxed text-slate-700">
-            {row.yesterday_work?.trim() || '—'}
-          </dd>
-        </div>
+      {isExpanded && (
+        <dl className="flex-1 space-y-3 px-5 py-4 text-sm">
+          {/* Yesterday */}
+          <div>
+            <dt className="mb-0.5 text-xs font-semibold uppercase tracking-widest text-slate-400">Yesterday</dt>
+            <dd className="whitespace-pre-wrap leading-relaxed text-slate-700">
+              {row.yesterday_work?.trim() || '—'}
+            </dd>
+          </div>
 
-        {/* Today */}
-        <div>
-          <dt className="mb-0.5 text-xs font-semibold uppercase tracking-widest text-slate-400">Today</dt>
-          <dd className="whitespace-pre-wrap leading-relaxed text-slate-700">
-            {row.today_work?.trim() || '—'}
-          </dd>
-        </div>
+          {/* Today */}
+          <div>
+            <dt className="mb-0.5 text-xs font-semibold uppercase tracking-widest text-slate-400">Today</dt>
+            <dd className="whitespace-pre-wrap leading-relaxed text-slate-700">
+              {row.today_work?.trim() || '—'}
+            </dd>
+          </div>
 
-        {/* Blockers */}
-        <div>
-          <dt className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-amber-500">Blockers</dt>
-          <dd>
-            {blockerText ? (
-              <div className="overflow-hidden rounded-xl border border-amber-200 bg-amber-50">
-                <p className="whitespace-pre-wrap px-3 py-2.5 text-sm leading-relaxed text-amber-900">
-                  {blockerText}
-                </p>
-                <div className="border-t border-amber-200/70 bg-amber-50/80 px-3 py-2 flex flex-col gap-2">
-                  {linkedTasks.length > 0 ? (
-                    linkedTasks.map((task) => (
-                      <div key={task.id} className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-amber-800">
-                            → Picked up by <span className="font-medium text-amber-900">{resolveProfileName(task.profiles)}</span>
-                          </span>
-                        </div>
-                        <TaskStatusBadge status={task.status} />
+          {/* Blockers */}
+          <div>
+            <dt className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-amber-500">Blockers</dt>
+            <dd>
+              {parsedBlockers.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {parsedBlockers.map((b, i) => (
+                    <div key={i} className="overflow-hidden rounded-xl border border-amber-200 bg-amber-50">
+                      <p className="whitespace-pre-wrap px-3 py-2.5 text-sm leading-relaxed text-amber-900">
+                        {b}
+                      </p>
+                      <div className="border-t border-amber-200/70 bg-amber-50/80 px-3 py-2 flex flex-col gap-2">
+                        {linkedTasks[b] && linkedTasks[b].length > 0 ? (
+                          linkedTasks[b].map((task) => (
+                            <div key={task.id} className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-amber-800">
+                                  → Picked up by <span className="font-medium text-amber-900">{resolveProfileName(task.profiles)}</span>
+                                </span>
+                              </div>
+                              <TaskStatusBadge status={task.status} />
+                            </div>
+                          ))
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 ring-1 ring-inset ring-red-600/10">
+                              Open
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    ))
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 ring-1 ring-inset ring-red-600/10">
-                        Open
-                      </span>
                     </div>
-                  )}
+                  ))}
                 </div>
-              </div>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200/80">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                No blockers
-              </span>
-            )}
-          </dd>
-        </div>
-      </dl>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200/80">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  No blockers
+                </span>
+              )}
+            </dd>
+          </div>
+        </dl>
+      )}
     </article>
   )
 }
@@ -153,7 +184,7 @@ export default function History() {
     if (blockerStandupIds.length > 0) {
       const { data } = await supabase
         .from('tasks')
-        .select('id, title, status, blocker_source_id, profiles!tasks_user_id_fkey ( full_name )')
+        .select('id, title, status, blocker_source_id, blocker_item_id, profiles!tasks_user_id_fkey ( full_name )')
         .in('blocker_source_id', blockerStandupIds)
         .order('id', { ascending: true })
       if (data) allBlockerTasks = allBlockerTasks.concat(data)
@@ -162,7 +193,7 @@ export default function History() {
     // Fallback: match tasks with "[Blocker]" prefix that might not have a reliable blocker_source_id
     const { data: fallbackTasks } = await supabase
       .from('tasks')
-      .select('id, title, status, blocker_source_id, profiles!tasks_user_id_fkey ( full_name )')
+      .select('id, title, status, blocker_source_id, blocker_item_id, profiles!tasks_user_id_fkey ( full_name )')
       .is('blocker_source_id', null)
       .like('title', '[Blocker]%')
       .order('id', { ascending: true })
@@ -174,16 +205,31 @@ export default function History() {
       const bText = (row.blockers ?? '').trim()
       if (!bText) continue
       
-      const matches = allBlockerTasks.filter(t => {
-        if (t.blocker_source_id === row.id) return true
-        if (!t.blocker_source_id && t.title.startsWith('[Blocker]') && t.title.includes(bText.slice(0, 50))) {
-          return true
+      let parsed = []
+      try {
+        parsed = JSON.parse(bText)
+        if (!Array.isArray(parsed)) parsed = [bText]
+      } catch {
+        parsed = [bText]
+      }
+
+      map[row.id] = {}
+      for (const item of parsed) {
+        const itemText = item.trim()
+        if (!itemText) continue
+        
+        const matches = allBlockerTasks.filter(t => {
+          if (t.blocker_source_id === row.id && t.blocker_item_id === itemText) return true
+          if (t.blocker_source_id === row.id && !t.blocker_item_id) return true
+          if (!t.blocker_source_id && t.title.startsWith('[Blocker]') && t.title.includes(itemText.slice(0, 50))) {
+            return true
+          }
+          return false
+        })
+        
+        if (matches.length > 0) {
+          map[row.id][itemText] = matches
         }
-        return false
-      })
-      
-      if (matches.length > 0) {
-        map[row.id] = matches
       }
     }
     setBlockerTaskMap(map)
@@ -401,7 +447,8 @@ export default function History() {
                         <HistoryCard
                           key={row.id}
                           row={row}
-                          linkedTasks={blockerTaskMap[row.id] ?? []}
+                          linkedTasks={blockerTaskMap[row.id] ?? {}}
+                          defaultExpanded={selectedUser !== 'all'}
                         />
                       ))}
                     </div>

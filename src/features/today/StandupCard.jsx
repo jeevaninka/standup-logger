@@ -13,7 +13,7 @@ export function StandupCard({
   const [yesterday, setYesterday] = useState('')
   const [todayPlans, setTodayPlans] = useState('')
   const [hasBlocker, setHasBlocker] = useState(false)
-  const [blockers, setBlockers] = useState('')
+  const [blockersList, setBlockersList] = useState([''])
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -22,7 +22,16 @@ export function StandupCard({
       setTodayPlans(existingStandup.today_work ?? '')
       const blockerText = existingStandup.blockers?.trim() ?? ''
       setHasBlocker(Boolean(blockerText))
-      setBlockers(blockerText)
+      try {
+        const parsed = JSON.parse(blockerText)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setBlockersList(parsed)
+        } else {
+          setBlockersList(blockerText ? [blockerText] : [''])
+        }
+      } catch {
+        setBlockersList(blockerText ? [blockerText] : [''])
+      }
     } else if (!existingStandup) {
       setEditMode(true)
     }
@@ -30,16 +39,39 @@ export function StandupCard({
 
   function handleToggleBlocker(val) {
     setHasBlocker(val)
-    if (!val) setBlockers('')
+    if (!val) setBlockersList([''])
+  }
+
+  function handleBlockerChange(index, val) {
+    setBlockersList(prev => {
+      const copy = [...prev]
+      copy[index] = val
+      return copy
+    })
+  }
+
+  function handleAddBlocker() {
+    setBlockersList(prev => [...prev, ''])
+  }
+
+  function handleRemoveBlocker(index) {
+    setBlockersList(prev => {
+      if (prev.length === 1) return ['']
+      const copy = [...prev]
+      copy.splice(index, 1)
+      return copy
+    })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitting(true)
+    const validBlockers = blockersList.map(b => b.trim()).filter(Boolean)
+    const finalBlockers = hasBlocker && validBlockers.length > 0 ? JSON.stringify(validBlockers) : ''
     await onSubmit({
       yesterday_work: yesterday,
       today_work: todayPlans,
-      blockers: hasBlocker ? blockers : '',
+      blockers: finalBlockers,
       wasEditing: Boolean(existingStandup?.id),
     })
     setSubmitting(false)
@@ -52,7 +84,16 @@ export function StandupCard({
     setYesterday(existingStandup?.yesterday_work ?? '')
     setTodayPlans(existingStandup?.today_work ?? '')
     setHasBlocker(Boolean(blockerText))
-    setBlockers(blockerText)
+    try {
+      const parsed = JSON.parse(blockerText)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        setBlockersList(parsed)
+      } else {
+        setBlockersList(blockerText ? [blockerText] : [''])
+      }
+    } catch {
+      setBlockersList(blockerText ? [blockerText] : [''])
+    }
   }
 
   if (loading) {
@@ -94,10 +135,23 @@ export function StandupCard({
             <div>
               <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-amber-500">Blockers</p>
               {existingStandup.blockers?.trim() ? (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-amber-900">
-                    {existingStandup.blockers}
-                  </p>
+                <div className="flex flex-col gap-2">
+                  {(() => {
+                    let parsed = []
+                    try {
+                      parsed = JSON.parse(existingStandup.blockers)
+                      if (!Array.isArray(parsed)) parsed = [existingStandup.blockers]
+                    } catch {
+                      parsed = [existingStandup.blockers]
+                    }
+                    return parsed.map((b, i) => (
+                      <div key={i} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-amber-900">
+                          {b}
+                        </p>
+                      </div>
+                    ))
+                  })()}
                 </div>
               ) : (
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200/80">
@@ -135,7 +189,7 @@ export function StandupCard({
                   rows={3}
                   value={value}
                   onChange={(e) => setter(e.target.value)}
-                  className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/60"
+                  className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/60 resize-none"
                 />
               </div>
             ))}
@@ -160,20 +214,43 @@ export function StandupCard({
               </div>
 
               {hasBlocker && (
-                <div className="mt-3">
-                  <label htmlFor="su-blockers" className="mb-1.5 block text-sm font-medium text-amber-700">
-                    Describe the blocker <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    id="su-blockers"
-                    required
-                    rows={3}
-                    value={blockers}
-                    onChange={(e) => setBlockers(e.target.value)}
-                    className="block w-full rounded-xl border border-amber-200 bg-amber-50/60 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-amber-400/60 focus:border-amber-400 focus:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/60"
-                    placeholder="Describe your blocker…"
-                    autoFocus
-                  />
+                <div className="mt-3 flex flex-col gap-3">
+                  {blockersList.map((blocker, index) => (
+                    <div key={index} className="flex flex-col gap-1.5 relative">
+                      <label htmlFor={`su-blocker-${index}`} className="block text-sm font-medium text-amber-700">
+                        {blockersList.length > 1 ? `Blocker ${index + 1}` : 'Describe the blocker'} <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <textarea
+                          id={`su-blocker-${index}`}
+                          required
+                          rows={2}
+                          value={blocker}
+                          onChange={(e) => handleBlockerChange(index, e.target.value)}
+                          className="block w-full rounded-xl border border-amber-200 bg-amber-50/60 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm transition placeholder:text-amber-400/60 focus:border-amber-400 focus:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/60 resize-none"
+                          placeholder="Describe your blocker…"
+                          autoFocus={index === 0}
+                        />
+                        {blockersList.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveBlocker(index)}
+                            className="absolute top-2.5 right-2.5 p-1 text-amber-600/60 hover:text-amber-700 hover:bg-amber-100 rounded-md transition"
+                            aria-label="Remove blocker"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={handleAddBlocker}
+                    className="self-start text-sm font-medium text-amber-700 hover:text-amber-800 transition"
+                  >
+                    + Add another blocker
+                  </button>
                 </div>
               )}
             </div>

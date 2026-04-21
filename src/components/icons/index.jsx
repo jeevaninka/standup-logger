@@ -182,5 +182,29 @@ export function IconRefresh({ className }) {
   )
 }
 
+export function IconBug({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+  )
+}
+
+export function IconJira({ className }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M11.53 2c0 2.4-1.97 4.35-4.38 4.35H2V2h9.53zm-4.8 6.52c0 2.4-1.97 4.35-4.37 4.35H2V8.52h4.73zM2 15.05h4.73c2.4 0 4.37 1.94 4.37 4.34V22H2v-6.95zm10.35-6.53c0 2.4-1.96 4.35-4.37 4.35h-2.6V8.52h6.97zm-2.6 6.53c0 2.4-1.96 4.34-4.37 4.34V22h6.97v-6.95zm5.56-6.53c0 2.4-1.97 4.35-4.38 4.35h-2.6V8.52h6.98zm-2.6 6.53c0 2.4-1.97 4.34-4.38 4.34V22h6.98v-6.95zM22 8.52c0 2.4-1.97 4.35-4.38 4.35h-2.6V8.52H22zm-2.6 6.53c0 2.4-1.97 4.34-4.38 4.34V22H22v-6.95h-2.6z"/>
+    </svg>
+  )
+}
+
+export function IconChevronUp({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+    </svg>
+  )
+}
+
 
 

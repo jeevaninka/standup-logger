@@ -49,8 +49,14 @@ export function TodayPanel() {
   const [teamLoading, setTeamLoading] = useState(true)
   const [teamRows, setTeamRows] = useState([])
   const [blockerTaskMap, setBlockerTaskMap] = useState({})
+  const [profiles, setProfiles] = useState([])
 
   const userId = user?.id
+
+  const loadProfileList = useCallback(async () => {
+    const { data } = await supabase.from('profiles').select('id, full_name')
+    if (data) setProfiles(data)
+  }, [])
 
   const loadProfile = useCallback(async () => {
     if (!userId) return
@@ -138,18 +144,32 @@ export function TodayPanel() {
       for (const row of data) {
         const bText = (row.blockers ?? '').trim()
         if (!bText) continue
-        
-        // Find tasks explicitly linked via ID, OR implicitly linked via title substring fallback
-        const matches = allBlockerTasks.filter(t => {
-          if (t.blocker_source_id === row.id) return true
-          if (!t.blocker_source_id && t.title.startsWith('[Blocker]') && t.title.includes(bText.slice(0, 50))) {
-            return true
+
+        let parsed = []
+        try {
+          parsed = JSON.parse(bText)
+          if (!Array.isArray(parsed)) parsed = [bText]
+        } catch {
+          parsed = [bText]
+        }
+
+        map[row.id] = {}
+        for (const item of parsed) {
+          const itemText = item.trim()
+          if (!itemText) continue
+          
+          const matches = allBlockerTasks.filter(t => {
+            if (t.blocker_source_id === row.id && t.blocker_item_id === itemText) return true
+            if (t.blocker_source_id === row.id && !t.blocker_item_id) return true // Legacy compatibility
+            if (!t.blocker_source_id && t.title.startsWith('[Blocker]') && t.title.includes(itemText.slice(0, 50))) {
+              return true
+            }
+            return false
+          })
+          
+          if (matches.length > 0) {
+            map[row.id][itemText] = matches
           }
-          return false
-        })
-        
-        if (matches.length > 0) {
-          map[row.id] = matches
         }
       }
       setBlockerTaskMap(map)
@@ -165,7 +185,7 @@ export function TodayPanel() {
       setTeamLoading(true)
       await loadProfile()
       if (cancelled) return
-      await Promise.all([loadMyStandup(), loadTasks(), loadTeam()])
+      await Promise.all([loadMyStandup(), loadTasks(), loadTeam(), loadProfileList()])
       if (cancelled) return
       setStandupLoading(false)
       setTasksLoading(false)
@@ -173,7 +193,7 @@ export function TodayPanel() {
     }
     boot()
     return () => { cancelled = true }
-  }, [userId, loadProfile, loadMyStandup, loadTasks, loadTeam])
+  }, [userId, loadProfile, loadMyStandup, loadTasks, loadTeam, loadProfileList])
 
   const handleRefreshAll = useCallback(async () => {
     setStandupLoading(true)
@@ -251,26 +271,29 @@ export function TodayPanel() {
     }
   }
 
-  async function convertBlockerToTask(standup) {
-    if (!userId || !standup.blockers?.trim()) return
-    setConvertingBlocker(standup.id)
+  async function convertBlockerToTask(standupId, blockerText, options) {
+    if (!userId || !blockerText?.trim()) return
+    setConvertingBlocker(blockerText) // Using blockerText or a composite key since standupId is no longer unique to one blocker
     try {
-      const title = `[Blocker] ${standup.blockers.trim().slice(0, 120)}`
+      const title = `[Blocker] ${blockerText.trim().slice(0, 120)}`
       const { data, error } = await supabase
         .from('tasks')
         .insert({
-          user_id: userId,
+          user_id: options.assignee || userId,
           task_date: dateKey,
           title,
           status: 'todo',
-          blocker_source_id: standup.id,
+          blocker_source_id: standupId,
+          task_type: options.taskType || 'task',
+          jira_link: options.jiraLink || null,
+          blocker_item_id: blockerText.trim(), // To track specific blocker
         })
-        .select('id, title, status, blocker_source_id')
+        .select('id, title, status, blocker_source_id, user_id, task_type, jira_link, blocker_item_id')
         .single()
       if (!error && data) {
         setTasks((prev) => [...prev, data])
         showToast('Blocker added as task', 'success')
-        logger.info('blocker converted to task', { userId, standupId: standup.id, date: dateKey })
+        logger.info('blocker converted to task', { userId, standupId, date: dateKey })
         await loadTeam()
       } else if (error) {
         showToast('Failed to create task', 'error')
@@ -283,7 +306,7 @@ export function TodayPanel() {
   return (
     <div className="p-4 pb-24 md:p-8 md:pb-10">
       <div className="mx-auto max-w-6xl">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
           <StandupCard
             loading={standupLoading}
             existingStandup={existingStandup}
@@ -297,6 +320,7 @@ export function TodayPanel() {
             tasks={tasks}
             onAddTask={handleAddTask}
             onCycleTaskStatus={handleCycleTaskStatus}
+            onRefresh={handleRefreshAll}
           />
         </div>
         
@@ -305,14 +329,6 @@ export function TodayPanel() {
             <h3 className="text-lg font-semibold text-slate-900">Team Today</h3>
             <span className="text-sm text-slate-400">{formatDisplayDate(dateKey)}</span>
           </div>
-          <button
-            type="button"
-            onClick={handleRefreshAll}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900 active:scale-[0.98]"
-          >
-            <IconRefresh className="h-4 w-4" />
-            Refresh
-          </button>
         </div>
 
         <TeamTodayGrid
@@ -324,6 +340,7 @@ export function TodayPanel() {
           convertingBlockerId={convertingBlocker}
           onConvertBlocker={convertBlockerToTask}
           blockerTaskMap={blockerTaskMap}
+          profiles={profiles}
         />
       </div>
     </div>

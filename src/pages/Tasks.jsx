@@ -7,7 +7,7 @@ import { logger } from '../lib/logger.js'
 import { supabase } from '../lib/supabase.js'
 import { Spinner } from '../components/Spinner.jsx'
 import { TaskStatusBadge } from '../components/TaskStatusBadge.jsx'
-import { IconClipboard, IconPencil, IconLink, IconTrash } from '../components/icons/index.jsx'
+import { IconClipboard, IconPencil, IconLink, IconTrash, IconBug, IconJira, IconChevronDown, IconChevronRight } from '../components/icons/index.jsx'
 import { localDateKey } from '../lib/date.js'
 import { TASK_STATUSES, nextTaskStatus, statusBadgeClasses, statusLabel } from '../lib/tasks.js'
 import { resolveProfileName } from '../lib/profile.js'
@@ -22,7 +22,9 @@ const SECTIONS = [
 ]
 
 const FILTER_TABS = [
-  { key: 'all', label: 'All Tasks' },
+  { key: 'all', label: 'All' },
+  { key: 'task', label: 'Tasks' },
+  { key: 'bug', label: 'Bugs' },
   { key: 'blockers', label: 'From Blockers' },
 ]
 
@@ -55,6 +57,8 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
   const [editTitle, setEditTitle] = useState(task.title)
   const [editDue, setEditDue] = useState(task.due_date ?? '')
   const [editAssignee, setEditAssignee] = useState(task.user_id ?? '')
+  const [editTaskType, setEditTaskType] = useState(task.task_type ?? 'task')
+  const [editJiraLink, setEditJiraLink] = useState(task.jira_link ?? '')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -62,13 +66,17 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
       setEditTitle(task.title)
       setEditDue(task.due_date ?? '')
       setEditAssignee(task.user_id ?? '')
+      setEditTaskType(task.task_type ?? 'task')
+      setEditJiraLink(task.jira_link ?? '')
     }
-  }, [task.title, task.due_date, task.user_id, editing])
+  }, [task.title, task.due_date, task.user_id, task.task_type, task.jira_link, editing])
 
   function handleEditOpen() {
     setEditTitle(task.title)
     setEditDue(task.due_date ?? '')
     setEditAssignee(task.user_id ?? '')
+    setEditTaskType(task.task_type ?? 'task')
+    setEditJiraLink(task.jira_link ?? '')
     setEditing(true)
   }
 
@@ -76,7 +84,7 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
     const title = editTitle.trim()
     if (!title) return
     setSaving(true)
-    await onEdit(task, { title, due_date: editDue.trim() || null, user_id: editAssignee || task.user_id })
+    await onEdit(task, { title, due_date: editDue.trim() || null, user_id: editAssignee || task.user_id, task_type: editTaskType, jira_link: editJiraLink.trim() || null })
     setSaving(false)
     setEditing(false)
   }
@@ -120,6 +128,27 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
               className={`block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm ${inputFocus}`}
             />
           </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">Type</label>
+            <select
+              value={editTaskType}
+              onChange={(e) => setEditTaskType(e.target.value)}
+              className={`block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm ${inputFocus}`}
+            >
+              <option value="task">Task</option>
+              <option value="bug">Bug</option>
+            </select>
+          </div>
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-xs font-medium text-slate-600">Jira Link <span className="font-normal text-slate-400">(optional)</span></label>
+            <input
+              type="url"
+              value={editJiraLink}
+              onChange={(e) => setEditJiraLink(e.target.value)}
+              placeholder="https://jira.company.com/browse/PROJ-123"
+              className={`block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 ${inputFocus}`}
+            />
+          </div>
         </div>
         <div className="mt-4 flex gap-2">
           <button
@@ -149,7 +178,14 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
       )}
 
       <div className="flex items-start justify-between gap-2">
-        <h3 className="min-w-0 flex-1 font-medium text-slate-900">{task.title}</h3>
+        <div className="min-w-0 flex-1 flex items-start gap-2">
+          {task.task_type === 'bug' && (
+            <span className="mt-0.5 flex shrink-0 items-center justify-center rounded bg-red-100 p-0.5 text-red-600" title="Bug">
+              <IconBug className="h-3.5 w-3.5" />
+            </span>
+          )}
+          <h3 className="font-medium text-slate-900 break-words">{task.title}</h3>
+        </div>
         {isOwnTask && (
           <div className="flex shrink-0 items-center gap-1">
             <button type="button" onClick={handleEditOpen} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Edit">
@@ -172,7 +208,7 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
         </p>
       ) : null}
 
-      <div className="mt-3">
+      <div className="mt-3 flex items-center justify-between gap-2">
         <button
           type="button"
           disabled={updating || !isOwnTask}
@@ -183,7 +219,34 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
           {updating ? <Spinner size="sm" /> : null}
           {statusLabel(task.status)}
         </button>
+        {task.jira_link && (
+          <a
+            href={task.jira_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-blue-600"
+          >
+            <IconJira className="h-3.5 w-3.5" />
+            Jira
+          </a>
+        )}
       </div>
+
+      {task.assignee_history && task.assignee_history.length > 1 && (
+        <div className="mt-3 border-t border-slate-100 pt-2 text-[10px] text-slate-400">
+          <span className="font-medium text-slate-500">History:</span>{' '}
+          {task.assignee_history.map((h, i) => {
+            const isLast = i === task.assignee_history.length - 1
+            const name = resolveProfileName(profiles.find(p => p.id === h.uid)) || 'Unknown'
+            return (
+              <span key={i}>
+                {name}
+                {!isLast && ' → '}
+              </span>
+            )
+          })}
+        </div>
+      )}
     </article>
   )
 }
@@ -210,7 +273,12 @@ export default function Tasks() {
   const [formAssignee, setFormAssignee] = useState('')
   const [saving, setSaving] = useState(false)
 
+  const [formTaskType, setFormTaskType] = useState('task')
+  const [formJiraLink, setFormJiraLink] = useState('')
+
   const [statusUpdatingId, setStatusUpdatingId] = useState(null)
+
+  const [selectedUserFilter, setSelectedUserFilter] = useState('all')
 
   const loadProfiles = useCallback(async () => {
     const { data } = await supabase.from('profiles').select('id, full_name')
@@ -222,7 +290,7 @@ export default function Tasks() {
     // Load ALL tasks (all users) — RLS must allow SELECT for team tasks
     const { data, error } = await supabase
       .from('tasks')
-      .select('id, title, status, due_date, task_date, blocker_source_id, user_id')
+      .select('id, title, status, due_date, task_date, blocker_source_id, user_id, task_type, jira_link, assignee_history')
       .order('due_date', { ascending: true, nullsFirst: false })
       .order('id', { ascending: true })
     if (error) {
@@ -253,11 +321,18 @@ export default function Tasks() {
   }, [userId, formAssignee])
 
   const visibleTasks = useMemo(() => {
-    if (activeFilter === 'blockers') return tasks.filter((t) => Boolean(t.blocker_source_id))
-    return tasks
-  }, [tasks, activeFilter])
+    let filtered = tasks
+    if (selectedUserFilter !== 'all') {
+      filtered = filtered.filter(t => t.user_id === selectedUserFilter)
+    }
+    if (activeFilter === 'blockers') return filtered.filter((t) => Boolean(t.blocker_source_id))
+    if (activeFilter === 'task') return filtered.filter((t) => t.task_type !== 'bug')
+    if (activeFilter === 'bug') return filtered.filter((t) => t.task_type === 'bug')
+    return filtered
+  }, [tasks, activeFilter, selectedUserFilter])
 
-  // Group by user_id: current user first, then others alphabetically
+  const [collapsedUsers, setCollapsedUsers] = useState({})
+
   const userGroups = useMemo(() => {
     const map = new Map()
     for (const t of visibleTasks) {
@@ -285,6 +360,25 @@ export default function Tasks() {
     })
   }, [visibleTasks, profiles, userId])
 
+  // Initialize all to collapsed if not already in state
+  useEffect(() => {
+    setCollapsedUsers(prev => {
+      let changed = false
+      const copy = { ...prev }
+      for (const group of userGroups) {
+        if (copy[group.uid] === undefined) {
+          copy[group.uid] = true // collapsed by default
+          changed = true
+        }
+      }
+      return changed ? copy : prev
+    })
+  }, [userGroups])
+
+  function toggleUserCollapse(uid) {
+    setCollapsedUsers(prev => ({ ...prev, [uid]: !prev[uid] }))
+  }
+
   const blockerCount = useMemo(() => tasks.filter((t) => Boolean(t.blocker_source_id)).length, [tasks])
 
   async function handleSaveNew(e) {
@@ -293,10 +387,20 @@ export default function Tasks() {
     if (!title || !userId) return
     setSaving(true)
     const assignTo = formAssignee || userId
+    const initialHistory = [{ uid: assignTo, assigned_at: new Date().toISOString() }]
     const { data, error } = await supabase
       .from('tasks')
-      .insert({ user_id: assignTo, title, status: formStatus, due_date: formDue.trim() || null, task_date: localDateKey() })
-      .select('id, title, status, due_date, task_date, blocker_source_id, user_id')
+      .insert({
+        user_id: assignTo,
+        title,
+        status: formStatus,
+        due_date: formDue.trim() || null,
+        task_date: localDateKey(),
+        task_type: formTaskType,
+        jira_link: formJiraLink.trim() || null,
+        assignee_history: initialHistory
+      })
+      .select('id, title, status, due_date, task_date, blocker_source_id, user_id, task_type, jira_link, assignee_history')
       .single()
     setSaving(false)
     if (error) { showToast(error.message, 'error'); return }
@@ -305,7 +409,7 @@ export default function Tasks() {
       showToast('Task added', 'success')
       setTasks((prev) => [...prev, data])
     }
-    setFormTitle(''); setFormDue(''); setFormStatus('todo'); setFormAssignee(userId); setShowAddForm(false)
+    setFormTitle(''); setFormDue(''); setFormStatus('todo'); setFormAssignee(userId); setFormTaskType('task'); setFormJiraLink(''); setShowAddForm(false)
   }
 
   async function handleCycleStatus(task) {
@@ -326,19 +430,27 @@ export default function Tasks() {
     setTasks((prev) => prev.filter((t) => t.id !== task.id))
   }
 
-  async function handleEdit(task, { title, due_date, user_id: newUserId }) {
+  async function handleEdit(task, { title, due_date, user_id: newUserId, task_type, jira_link }) {
+    let history = task.assignee_history ?? []
+    if (!Array.isArray(history)) history = []
+    
+    let newHistory = history
+    if (newUserId !== task.user_id) {
+      newHistory = [...history, { uid: newUserId, assigned_at: new Date().toISOString() }]
+    }
+
     const { error } = await supabase
       .from('tasks')
-      .update({ title, due_date, user_id: newUserId })
+      .update({ title, due_date, user_id: newUserId, task_type, jira_link, assignee_history: newHistory })
       .eq('id', task.id)
       .eq('user_id', task.user_id)
     if (error) { showToast(error.message, 'error'); return }
     showToast('Task updated', 'success')
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, title, due_date, user_id: newUserId } : t)))
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, title, due_date, user_id: newUserId, task_type, jira_link, assignee_history: newHistory } : t)))
   }
 
   function cancelAdd() {
-    setShowAddForm(false); setFormTitle(''); setFormDue(''); setFormStatus('todo'); setFormAssignee(userId)
+    setShowAddForm(false); setFormTitle(''); setFormDue(''); setFormStatus('todo'); setFormAssignee(userId); setFormTaskType('task'); setFormJiraLink('')
   }
 
   const totalVisible = visibleTasks.length
@@ -363,22 +475,38 @@ export default function Tasks() {
         ) : null}
 
         {/* Filter tabs */}
-        <div className="mt-6 flex items-center gap-1 rounded-xl bg-slate-100 p-1 w-fit">
-          {FILTER_TABS.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setActiveFilter(tab.key)}
-              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-slate-400 ${activeFilter === tab.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+        <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 w-fit">
+            {FILTER_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveFilter(tab.key)}
+                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-slate-400 ${activeFilter === tab.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                {tab.label}
+                {tab.key === 'blockers' && blockerCount > 0 && (
+                  <span className={`rounded-full px-1.5 py-0.5 text-xs font-bold ${activeFilter === 'blockers' ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-600'}`}>
+                    {blockerCount}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+          <div>
+            <label htmlFor="user-filter" className="sr-only">Team Member</label>
+            <select
+              id="user-filter"
+              value={selectedUserFilter}
+              onChange={(e) => setSelectedUserFilter(e.target.value)}
+              className={`block w-full sm:w-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm ${inputFocus}`}
             >
-              {tab.label}
-              {tab.key === 'blockers' && blockerCount > 0 && (
-                <span className={`rounded-full px-1.5 py-0.5 text-xs font-bold ${activeFilter === 'blockers' ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-600'}`}>
-                  {blockerCount}
-                </span>
-              )}
-            </button>
-          ))}
+              <option value="all">All team members</option>
+              {profiles.map(p => (
+                <option key={p.id} value={p.id}>{resolveProfileName(p)}{p.id === userId ? ' (you)' : ''}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Add task form */}
@@ -434,6 +562,29 @@ export default function Tasks() {
                   className={`mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm ${inputFocus}`}
                 />
               </div>
+              <div>
+                <label htmlFor="task-type" className="block text-sm font-medium text-slate-700">Type</label>
+                <select
+                  id="task-type"
+                  value={formTaskType}
+                  onChange={(e) => setFormTaskType(e.target.value)}
+                  className={`mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm ${inputFocus}`}
+                >
+                  <option value="task">Task</option>
+                  <option value="bug">Bug</option>
+                </select>
+              </div>
+              <div className="sm:col-span-2">
+                <label htmlFor="task-jira" className="block text-sm font-medium text-slate-700">Jira Link <span className="font-normal text-slate-500">(optional)</span></label>
+                <input
+                  id="task-jira"
+                  type="url"
+                  value={formJiraLink}
+                  onChange={(e) => setFormJiraLink(e.target.value)}
+                  placeholder="https://jira.company.com/browse/PROJ-123"
+                  className={`mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm placeholder:text-slate-400 ${inputFocus}`}
+                />
+              </div>
             </div>
             <div className="mt-6 flex gap-3">
               <button
@@ -466,58 +617,71 @@ export default function Tasks() {
           </div>
         ) : (
           <div className="mt-8 space-y-10">
-            {userGroups.map(({ uid, name, grouped, isMe }) => (
+            {userGroups.map(({ uid, name, grouped, isMe }) => {
+              const isCollapsed = collapsedUsers[uid] ?? true
+              return (
               <section key={uid}>
                 {/* User heading */}
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white">
-                    {name.slice(0, 2).toUpperCase()}
+                <button
+                  type="button"
+                  onClick={() => toggleUserCollapse(uid)}
+                  className="mb-4 flex w-full items-center justify-between gap-3 rounded-lg bg-slate-200/50 px-4 py-3 text-left transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white">
+                      {name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <h2 className="text-base font-semibold text-slate-900">
+                      {isMe ? `${name} (you)` : name}
+                    </h2>
+                    <span className="text-sm text-slate-500">
+                      {Object.values(grouped).flat().length} task{Object.values(grouped).flat().length !== 1 ? 's' : ''}
+                    </span>
                   </div>
-                  <h2 className="text-base font-semibold text-slate-900">
-                    {isMe ? `${name} (you)` : name}
-                  </h2>
-                  <span className="text-sm text-slate-400">
-                    {Object.values(grouped).flat().length} task{Object.values(grouped).flat().length !== 1 ? 's' : ''}
-                  </span>
-                </div>
+                  <div className="text-slate-400">
+                    {isCollapsed ? <IconChevronRight className="h-5 w-5" /> : <IconChevronDown className="h-5 w-5" />}
+                  </div>
+                </button>
 
                 {/* Kanban columns */}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                  {SECTIONS.map(({ status, label, empty }) => {
-                    const list = grouped[status] ?? []
-                    const topBorder = status === 'todo' ? 'border-t-slate-300' : status === 'in_progress' ? 'border-t-amber-400' : 'border-t-emerald-400'
-                    return (
-                      <section key={status} className={`flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ring-1 ring-slate-200/60 border-t-4 ${topBorder}`}>
-                        <div className="mb-4 flex items-center justify-between gap-2">
-                          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">{label}</h3>
-                          <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-bold text-slate-800">{list.length}</span>
-                        </div>
-                        <div className="flex flex-1 flex-col gap-3">
-                          {list.length === 0 ? (
-                            <p className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white/80 px-4 py-10 text-center text-sm text-slate-500">
-                              {activeFilter === 'blockers' ? 'No blocker tasks here.' : empty}
-                            </p>
-                          ) : (
-                            list.map((task) => (
-                              <TaskCard
-                                key={task.id}
-                                task={task}
-                                onCycleStatus={handleCycleStatus}
-                                onDelete={handleDelete}
-                                onEdit={handleEdit}
-                                statusUpdatingId={statusUpdatingId}
-                                currentUserId={userId}
-                                profiles={profiles}
-                              />
-                            ))
-                          )}
-                        </div>
-                      </section>
-                    )
-                  })}
-                </div>
+                {!isCollapsed && (
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    {SECTIONS.map(({ status, label, empty }) => {
+                      const list = grouped[status] ?? []
+                      const topBorder = status === 'todo' ? 'border-t-slate-300' : status === 'in_progress' ? 'border-t-amber-400' : 'border-t-emerald-400'
+                      return (
+                        <section key={status} className={`flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ring-1 ring-slate-200/60 border-t-4 ${topBorder}`}>
+                          <div className="mb-4 flex items-center justify-between gap-2">
+                            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">{label}</h3>
+                            <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-bold text-slate-800">{list.length}</span>
+                          </div>
+                          <div className="flex flex-1 flex-col gap-3">
+                            {list.length === 0 ? (
+                              <p className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white/80 px-4 py-10 text-center text-sm text-slate-500">
+                                {activeFilter === 'blockers' ? 'No blocker tasks here.' : empty}
+                              </p>
+                            ) : (
+                              list.map((task) => (
+                                <TaskCard
+                                  key={task.id}
+                                  task={task}
+                                  onCycleStatus={handleCycleStatus}
+                                  onDelete={handleDelete}
+                                  onEdit={handleEdit}
+                                  statusUpdatingId={statusUpdatingId}
+                                  currentUserId={userId}
+                                  profiles={profiles}
+                                />
+                              ))
+                            )}
+                          </div>
+                        </section>
+                      )
+                    })}
+                  </div>
+                )}
               </section>
-            ))}
+            )})}
           </div>
         )}
 

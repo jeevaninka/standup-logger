@@ -47,19 +47,14 @@ function NoteItem({ note, onDelete, onEdit }) {
     return (
       <li className="rounded-xl border border-slate-300 bg-white p-5 shadow-sm ring-1 ring-slate-200">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Edit note</p>
-        <textarea
-          autoFocus
-          rows={5}
-          value={editContent}
-          onChange={(e) => setEditContent(e.target.value)}
-          onKeyDown={(e) => {
-            // Ctrl/Cmd+Enter saves, Escape cancels
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleEditSave()
-            if (e.key === 'Escape') handleEditCancel()
-          }}
-          className={`block w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm ${inputFocus}`}
-          placeholder="Note content…"
-        />
+          <textarea
+            autoFocus
+            rows={3}
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            className={`mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm ${inputFocus} resize-none`}
+            placeholder="Edit your note…"
+          />
         <p className="mt-1 text-xs text-slate-400">Ctrl+Enter to save · Esc to cancel</p>
         <div className="mt-3 flex gap-2">
           <button
@@ -266,8 +261,8 @@ export default function Notes() {
             rows={6}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Capture a thought..."
-            className={`block w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 shadow-sm placeholder:text-slate-400 ${inputFocus}`}
+            className={`block w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 shadow-sm placeholder:text-slate-400 ${inputFocus} resize-none`}
+            placeholder="What's on your mind?"
           />
           <div className="mt-3 flex justify-stretch sm:justify-end">
             <button
