@@ -170,7 +170,7 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
   }
 
   return (
-    <article id={`task-${task.id}`} className={`relative flex flex-col rounded-2xl border shadow-sm ring-1 transition-all duration-500 overflow-hidden ${isFromBlocker ? 'bg-amber-100 border-l-4 border-l-amber-400 border-amber-200 ring-amber-100' : task.task_type === 'bug' ? 'bg-red-50 border-l-4 border-l-red-400 border-red-200 ring-red-100' : 'bg-white border-slate-200 ring-slate-100'} min-h-[160px] ${isExpanded ? 'max-h-[2000px]' : 'max-h-[160px]'}`}>
+    <article id={`task-${task.id}`} className={`relative flex flex-col rounded-2xl border shadow-sm ring-1 transition-colors duration-300 overflow-hidden ${isFromBlocker ? 'bg-amber-100 border-l-4 border-l-amber-400 border-amber-200 ring-amber-100' : task.task_type === 'bug' ? 'bg-red-50 border-l-4 border-l-red-400 border-red-200 ring-red-100' : 'bg-white border-slate-200 ring-slate-100'}`}>
       {isOwnTask && !editing && (
         <div className="absolute top-3 right-3 flex shrink-0 items-center gap-1 z-10">
           <button type="button" onClick={(e) => { e.stopPropagation(); handleEditOpen(); }} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700" aria-label="Edit">
@@ -253,11 +253,13 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
         </div>
       </div>
 
-      <div className={`px-4 pb-4 transition-all duration-300 ease-in-out ${isExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
-        <div className="pt-4 border-t border-slate-200/60 flex flex-col gap-3">
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-500">Env:</label>
+      <div className={`grid transition-all duration-200 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+        <div className="overflow-hidden">
+          <div className="px-4 pb-4">
+            <div className="pt-4 border-t border-slate-200/60 flex flex-col gap-3">
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-slate-500">Env:</label>
               <select 
                 value={task.test_env || ''} 
                 onChange={(e) => onEnvChange(task.id, e.target.value || null)}
@@ -312,6 +314,8 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
               </button>
             )}
           </div>
+        </div>
+        </div>
         </div>
       </div>
 
