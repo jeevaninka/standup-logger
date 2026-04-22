@@ -27,6 +27,7 @@ const FILTER_TABS = [
   { key: 'task', label: 'Tasks' },
   { key: 'bug', label: 'Bugs' },
   { key: 'blockers', label: 'From Blockers' },
+  { key: 'archived', label: 'Archived' },
 ]
 
 function formatDueDate(dateStr) {
@@ -47,12 +48,13 @@ function isOverdue(dueDateStr) {
 
 // ── TaskCard ──────────────────────────────────────────────────────────────────
 
-function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, currentUserId, profiles }) {
+function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, currentUserId, profiles, expandedId, onToggleExpand, onArchive, onUnarchive, onEnvChange }) {
   const overdue = task.status !== 'done' && isOverdue(task.due_date)
   const dueLabel = formatDueDate(task.due_date)
   const updating = statusUpdatingId === task.id
   const isFromBlocker = Boolean(task.blocker_source_id)
   const isOwnTask = task.user_id === currentUserId
+  const isExpanded = expandedId === task.id
 
   const [editing, setEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
@@ -168,93 +170,148 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
   }
 
   return (
-    <article id={`task-${task.id}`} className={`relative flex flex-col rounded-2xl border p-4 shadow-sm ring-1 transition-all duration-200 h-auto ${isFromBlocker ? 'bg-amber-100 border-l-4 border-l-amber-400 border-amber-200 ring-amber-100' : task.task_type === 'bug' ? 'bg-red-50 border-l-4 border-l-red-400 border-red-200 ring-red-100' : 'bg-white border-slate-200 ring-slate-100'}`}>
-      {isFromBlocker && (
-        <div className="mb-2 flex items-center gap-1.5 shrink-0">
-          <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
-            <IconLink className="h-3 w-3" />
-            From blocker
-          </span>
+    <article id={`task-${task.id}`} className={`relative flex flex-col rounded-2xl border p-4 shadow-sm ring-1 transition-all duration-200 ${!isExpanded ? 'h-[160px] overflow-hidden' : 'h-auto'} ${isFromBlocker ? 'bg-amber-100 border-l-4 border-l-amber-400 border-amber-200 ring-amber-100' : task.task_type === 'bug' ? 'bg-red-50 border-l-4 border-l-red-400 border-red-200 ring-red-100' : 'bg-white border-slate-200 ring-slate-100'}`}>
+      {isOwnTask && !editing && (
+        <div className="absolute top-3 right-3 flex shrink-0 items-center gap-1 z-10">
+          <button type="button" onClick={(e) => { e.stopPropagation(); handleEditOpen(); }} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700" aria-label="Edit">
+            <IconPencil className="h-4 w-4" />
+          </button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(task); }} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-red-100 hover:text-red-600" aria-label="Delete">
+            <IconTrash className="h-4 w-4" />
+          </button>
         </div>
       )}
-
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1 flex flex-col items-start gap-1">
-          <div className="flex items-center gap-2">
-            {task.task_type === 'bug' ? (
-              <span className="flex shrink-0 items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-600" title="Bug">
-                <IconBug className="h-3 w-3" />
-                Bug
-              </span>
-            ) : (
-              <span className="flex shrink-0 items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500" title="Task">
-                <IconClipboard className="h-3 w-3" />
-                Task
-              </span>
-            )}
-          </div>
-          <h3 className="font-medium text-slate-900 break-words leading-tight">{task.title}</h3>
-        </div>
-        {isOwnTask && (
-          <div className="flex shrink-0 items-center gap-1">
-            <button type="button" onClick={handleEditOpen} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Edit">
-              <IconPencil className="h-4 w-4" />
-            </button>
-            <button type="button" onClick={() => onDelete(task)} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600" aria-label="Delete">
-              <IconTrash className="h-5 w-5" />
-            </button>
+      <div className="cursor-pointer" onClick={onToggleExpand}>
+        {isFromBlocker && (
+          <div className="mb-2 flex items-center gap-1.5 shrink-0 pr-14">
+            <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+              <IconLink className="h-3 w-3" />
+              From blocker
+            </span>
           </div>
         )}
-      </div>
 
-      {!isOwnTask && (
-        <p className="mt-1 text-xs text-slate-400">Assigned to <span className="font-medium text-slate-600">{assigneeName}</span></p>
-      )}
-
-      {dueLabel ? (
-        <p className={`mt-2 text-sm ${overdue ? 'font-medium text-red-600' : 'text-slate-600'}`}>
-          Due {dueLabel}{overdue ? ' · Overdue' : ''}
-        </p>
-      ) : null}
-
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <button
-          type="button"
-          disabled={updating || !isOwnTask}
-          onClick={() => isOwnTask && onCycleStatus(task)}
-          title={!isOwnTask ? "Only the assignee can update status" : undefined}
-          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${statusBadgeClasses(task.status)}`}
-        >
-          {updating ? <Spinner size="sm" /> : null}
-          {statusLabel(task.status)}
-        </button>
-        {task.jira_link && (
-          <a
-            href={task.jira_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-blue-600"
-          >
-            <IconJira className="h-3.5 w-3.5" />
-            Jira
-          </a>
-        )}
-      </div>
-
-      {task.assignee_history && task.assignee_history.length > 1 && (
-        <div className="mt-3 border-t border-slate-100 pt-3">
-          <div className="text-[10px] text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100">
-            <span className="font-medium text-slate-600 mb-1 block">History:</span>
-            {task.assignee_history.map((h, i) => {
-              const isLast = i === task.assignee_history.length - 1
-              const name = resolveProfileName(profiles.find(p => p.id === h.uid)) || 'Unknown'
-              return (
-                <span key={i}>
-                  {name}
-                  {!isLast && ' → '}
+        <div className="flex items-start justify-between gap-2 pr-14">
+          <div className="min-w-0 flex-1 flex flex-col items-start gap-1">
+            <div className="flex items-center gap-2">
+              {task.task_type === 'bug' ? (
+                <span className="flex shrink-0 items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-600" title="Bug">
+                  <IconBug className="h-3 w-3" />
+                  Bug
                 </span>
-              )
-            })}
+              ) : (
+                <span className="flex shrink-0 items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500" title="Task">
+                  <IconClipboard className="h-3 w-3" />
+                  Task
+                </span>
+              )}
+              {task.test_env && (
+                <span className={`flex shrink-0 items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                  task.test_env === 'Stage' ? 'bg-blue-100 text-blue-700' :
+                  task.test_env === 'UAT' ? 'bg-purple-100 text-purple-700' :
+                  task.test_env === 'Prod' ? 'bg-green-100 text-green-700' :
+                  'bg-slate-100 text-slate-700'
+                }`}>
+                  {task.test_env}
+                </span>
+              )}
+            </div>
+            <h3 className="font-medium text-slate-900 break-words leading-tight">{task.title}</h3>
+          </div>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            disabled={updating || !isOwnTask}
+            onClick={(e) => { e.stopPropagation(); isOwnTask && onCycleStatus(task); }}
+            title={!isOwnTask ? "Only the assignee can update status" : undefined}
+            className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${statusBadgeClasses(task.status)}`}
+          >
+            {updating ? <Spinner size="sm" /> : null}
+            {statusLabel(task.status)}
+          </button>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="mt-4 pt-4 border-t border-slate-200 flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-slate-500">Env:</label>
+              <select 
+                value={task.test_env || ''} 
+                onChange={(e) => onEnvChange(task.id, e.target.value || null)}
+                className="text-xs rounded border border-slate-200 px-1 py-0.5 bg-white"
+              >
+                <option value="">None</option>
+                <option value="Stage">Stage</option>
+                <option value="UAT">UAT</option>
+                <option value="Prod">Prod</option>
+              </select>
+            </div>
+          </div>
+
+          {!isOwnTask && (
+            <p className="text-xs text-slate-400">Assigned to <span className="font-medium text-slate-600">{assigneeName}</span></p>
+          )}
+
+          {dueLabel ? (
+            <p className={`text-sm ${overdue ? 'font-medium text-red-600' : 'text-slate-600'}`}>
+              Due {dueLabel}{overdue ? ' · Overdue' : ''}
+            </p>
+          ) : null}
+
+          {task.jira_link && (
+            <div>
+              <a
+                href={task.jira_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-blue-600"
+              >
+                <IconJira className="h-3.5 w-3.5" />
+                Jira
+              </a>
+            </div>
+          )}
+
+          {task.assignee_history && task.assignee_history.length > 1 && (
+            <div className="border-t border-slate-100 pt-3">
+              <div className="text-[10px] text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                <span className="font-medium text-slate-600 mb-1 block">History:</span>
+                {task.assignee_history.map((h, i) => {
+                  const isLast = i === task.assignee_history.length - 1
+                  const name = resolveProfileName(profiles.find(p => p.id === h.uid)) || 'Unknown'
+                  return (
+                    <span key={i}>
+                      {name}
+                      {!isLast && ' → '}
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="pt-2">
+            {task.archived ? (
+              <button 
+                type="button" 
+                onClick={() => onUnarchive(task.id)}
+                className="text-xs font-medium text-blue-600 hover:text-blue-800"
+              >
+                Unarchive
+              </button>
+            ) : (
+              <button 
+                type="button" 
+                onClick={() => onArchive(task.id)}
+                className="text-xs font-medium text-slate-500 hover:text-slate-700"
+              >
+                Archive
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -286,8 +343,10 @@ export default function Tasks() {
 
   const [formTaskType, setFormTaskType] = useState('task')
   const [formJiraLink, setFormJiraLink] = useState('')
+  const [formTestEnv, setFormTestEnv] = useState('')
 
   const [statusUpdatingId, setStatusUpdatingId] = useState(null)
+  const [expandedTaskId, setExpandedTaskId] = useState(null)
 
   const [selectedUserFilter, setSelectedUserFilter] = useState('all')
 
@@ -301,7 +360,7 @@ export default function Tasks() {
     // Load ALL tasks (all users) — RLS must allow SELECT for team tasks
     const { data, error } = await supabase
       .from('tasks')
-      .select('id, title, status, due_date, task_date, blocker_source_id, user_id, task_type, jira_link, assignee_history')
+      .select('id, title, status, due_date, task_date, blocker_source_id, user_id, task_type, jira_link, assignee_history, test_env, archived')
       .order('due_date', { ascending: true, nullsFirst: false })
       .order('id', { ascending: true })
     if (error) {
@@ -336,6 +395,12 @@ export default function Tasks() {
     if (selectedUserFilter !== 'all') {
       filtered = filtered.filter(t => t.user_id === selectedUserFilter)
     }
+    if (activeFilter === 'archived') {
+      return filtered.filter(t => t.archived)
+    }
+    
+    filtered = filtered.filter(t => !t.archived)
+
     if (activeFilter === 'blockers') return filtered.filter((t) => Boolean(t.blocker_source_id))
     if (activeFilter === 'task') return filtered.filter((t) => t.task_type !== 'bug')
     if (activeFilter === 'bug') return filtered.filter((t) => t.task_type === 'bug')
@@ -398,6 +463,7 @@ export default function Tasks() {
         if (prev[targetTask.user_id] === false) return prev
         return { ...prev, [targetTask.user_id]: false }
       })
+      setExpandedTaskId(targetTask.id)
     }
   }, [hash, tasks])
 
@@ -424,9 +490,11 @@ export default function Tasks() {
         task_date: localDateKey(),
         task_type: formTaskType,
         jira_link: formJiraLink.trim() || null,
-        assignee_history: initialHistory
+        assignee_history: initialHistory,
+        test_env: formTestEnv || null,
+        archived: false
       })
-      .select('id, title, status, due_date, task_date, blocker_source_id, user_id, task_type, jira_link, assignee_history')
+      .select('id, title, status, due_date, task_date, blocker_source_id, user_id, task_type, jira_link, assignee_history, test_env, archived')
       .single()
     setSaving(false)
     if (error) { showToast(error.message, 'error'); return }
@@ -435,7 +503,7 @@ export default function Tasks() {
       showToast('Task added', 'success')
       setTasks((prev) => [...prev, data])
     }
-    setFormTitle(''); setFormDue(''); setFormStatus('todo'); setFormAssignee(userId); setFormTaskType('task'); setFormJiraLink(''); setShowAddForm(false)
+    setFormTitle(''); setFormDue(''); setFormStatus('todo'); setFormAssignee(userId); setFormTaskType('task'); setFormJiraLink(''); setFormTestEnv(''); setShowAddForm(false)
   }
 
   async function handleCycleStatus(task) {
@@ -476,7 +544,35 @@ export default function Tasks() {
   }
 
   function cancelAdd() {
-    setShowAddForm(false); setFormTitle(''); setFormDue(''); setFormStatus('todo'); setFormAssignee(userId); setFormTaskType('task'); setFormJiraLink('')
+    setShowAddForm(false); setFormTitle(''); setFormDue(''); setFormStatus('todo'); setFormAssignee(userId); setFormTaskType('task'); setFormJiraLink(''); setFormTestEnv('')
+  }
+
+  async function onArchive(taskId) {
+    const { error } = await supabase.from('tasks').update({ archived: true }).eq('id', taskId)
+    if (error) { showToast(error.message, 'error'); return }
+    showToast('Task archived', 'success')
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, archived: true } : t))
+  }
+
+  async function onUnarchive(taskId) {
+    const { error } = await supabase.from('tasks').update({ archived: false }).eq('id', taskId)
+    if (error) { showToast(error.message, 'error'); return }
+    showToast('Task unarchived', 'success')
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, archived: false } : t))
+  }
+
+  async function onArchiveAllDone(uid) {
+    const { error } = await supabase.from('tasks').update({ archived: true }).eq('user_id', uid).eq('status', 'done').eq('archived', false)
+    if (error) { showToast(error.message, 'error'); return }
+    showToast('Archived all done tasks', 'success')
+    setTasks(prev => prev.map(t => (t.user_id === uid && t.status === 'done' && !t.archived) ? { ...t, archived: true } : t))
+  }
+
+  async function onEnvChange(taskId, newEnv) {
+    const { error } = await supabase.from('tasks').update({ test_env: newEnv }).eq('id', taskId)
+    if (error) { showToast(error.message, 'error'); return }
+    showToast('Environment updated', 'success')
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, test_env: newEnv } : t))
   }
 
   const totalVisible = visibleTasks.length
@@ -600,6 +696,20 @@ export default function Tasks() {
                   <option value="bug">Bug</option>
                 </select>
               </div>
+              <div>
+                <label htmlFor="task-env" className="block text-sm font-medium text-slate-700">Environment</label>
+                <select
+                  id="task-env"
+                  value={formTestEnv}
+                  onChange={(e) => setFormTestEnv(e.target.value)}
+                  className={`mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm ${inputFocus}`}
+                >
+                  <option value="">None</option>
+                  <option value="Stage">Stage</option>
+                  <option value="UAT">UAT</option>
+                  <option value="Prod">Prod</option>
+                </select>
+              </div>
               <div className="sm:col-span-2">
                 <label htmlFor="task-jira" className="block text-sm font-medium text-slate-700">Jira Link <span className="font-normal text-slate-500">(optional)</span></label>
                 <input
@@ -637,9 +747,29 @@ export default function Tasks() {
               </div>
             ))}
           </div>
-        ) : userGroups.length === 0 ? (
+        ) : visibleTasks.length === 0 ? (
           <div className="mt-8">
-            <EmptyState icon={<IconClipboard className="mx-auto" />} title="No tasks yet — add one above" description="Use + Add Task to create your first one." />
+            <EmptyState icon={<IconClipboard className="mx-auto" />} title="No tasks found" description={activeFilter === 'archived' ? 'No archived tasks.' : 'Use + Add Task to create your first one.'} />
+          </div>
+        ) : activeFilter === 'archived' ? (
+          <div className="mt-8 flex flex-col gap-3">
+            {visibleTasks.map(task => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onCycleStatus={handleCycleStatus}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+                statusUpdatingId={statusUpdatingId}
+                currentUserId={userId}
+                profiles={profiles}
+                expandedId={expandedTaskId}
+                onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                onArchive={onArchive}
+                onUnarchive={onUnarchive}
+                onEnvChange={onEnvChange}
+              />
+            ))}
           </div>
         ) : (
           <div className="mt-8 space-y-10">
@@ -683,7 +813,17 @@ export default function Tasks() {
                         <section key={status} className={`flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ring-1 ring-slate-200/60 border-t-4 ${topBorder}`}>
                           <div className="mb-4 flex items-center justify-between gap-2">
                             <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">{label}</h3>
-                            <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-bold text-slate-800">{list.length}</span>
+                            <div className="flex items-center gap-2">
+                              {status === 'done' && list.length > 0 && isMe && (
+                                <button
+                                  onClick={() => onArchiveAllDone(uid)}
+                                  className="text-[10px] uppercase font-bold text-slate-500 hover:text-slate-700 px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-50"
+                                >
+                                  Archive all
+                                </button>
+                              )}
+                              <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-bold text-slate-800">{list.length}</span>
+                            </div>
                           </div>
                           <div className="flex flex-1 flex-col gap-3">
                             {list.length === 0 ? (
@@ -701,6 +841,11 @@ export default function Tasks() {
                                   statusUpdatingId={statusUpdatingId}
                                   currentUserId={userId}
                                   profiles={profiles}
+                                  expandedId={expandedTaskId}
+                                  onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                                  onArchive={onArchive}
+                                  onUnarchive={onUnarchive}
+                                  onEnvChange={onEnvChange}
                                 />
                               ))
                             )}
