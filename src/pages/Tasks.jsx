@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { EmptyState } from '../components/EmptyState.jsx'
 import { useToast } from '../components/Toast.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -384,6 +385,21 @@ export default function Tasks() {
       return changed ? copy : prev
     })
   }, [userGroups])
+
+  const { hash } = useLocation()
+
+  // Auto-expand accordion if navigating via hash link
+  useEffect(() => {
+    if (!hash || !hash.startsWith('#task-')) return
+    const taskId = hash.replace('#task-', '')
+    const targetTask = tasks.find(t => String(t.id) === taskId)
+    if (targetTask && targetTask.user_id) {
+      setCollapsedUsers(prev => {
+        if (prev[targetTask.user_id] === false) return prev
+        return { ...prev, [targetTask.user_id]: false }
+      })
+    }
+  }, [hash, tasks])
 
   function toggleUserCollapse(uid) {
     setCollapsedUsers(prev => ({ ...prev, [uid]: !prev[uid] }))
