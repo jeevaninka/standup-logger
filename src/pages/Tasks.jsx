@@ -233,7 +233,27 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
 
       <div className={`px-4 pb-4 transition-all duration-300 ease-in-out ${isExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
         <div className="pt-4 border-t border-slate-200/60 flex flex-col gap-3">
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-3">
+              {dueLabel ? (
+                <p className={`text-sm ${overdue ? 'font-medium text-red-600' : 'text-slate-600'}`}>
+                  Due {dueLabel}{overdue ? ' · Overdue' : ''}
+                </p>
+              ) : null}
+
+              {task.jira_link && (
+                <a
+                  href={task.jira_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-blue-600"
+                >
+                  <IconJira className="h-3.5 w-3.5" />
+                  Jira
+                </a>
+              )}
+            </div>
+
             <div className="flex items-center gap-2">
               <label className="text-xs text-slate-500">Env:</label>
               <select 
@@ -251,26 +271,6 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
 
           {!isOwnTask && (
             <p className="text-xs text-slate-400">Assigned to <span className="font-medium text-slate-600">{assigneeName}</span></p>
-          )}
-
-          {dueLabel ? (
-            <p className={`text-sm ${overdue ? 'font-medium text-red-600' : 'text-slate-600'}`}>
-              Due {dueLabel}{overdue ? ' · Overdue' : ''}
-            </p>
-          ) : null}
-
-          {task.jira_link && (
-            <div>
-              <a
-                href={task.jira_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-blue-600"
-              >
-                <IconJira className="h-3.5 w-3.5" />
-                Jira
-              </a>
-            </div>
           )}
 
           {task.assignee_history && task.assignee_history.length > 1 && (
