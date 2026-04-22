@@ -193,7 +193,17 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
 
         <div className="flex items-start justify-between gap-2 pr-14">
           <div className="min-w-0 flex-1 flex flex-col items-start gap-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <button
+                type="button"
+                disabled={updating || !isOwnTask}
+                onClick={(e) => { e.stopPropagation(); isOwnTask && onCycleStatus(task); }}
+                title={!isOwnTask ? "Only the assignee can update status" : undefined}
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 ring-inset transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${statusBadgeClasses(task.status)}`}
+              >
+                {updating ? <Spinner size="sm" className="w-3 h-3" /> : null}
+                {statusLabel(task.status)}
+              </button>
               {task.task_type === 'bug' ? (
                 <span className="flex shrink-0 items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-600" title="Bug">
                   <IconBug className="h-3 w-3" />
@@ -218,19 +228,6 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
             </div>
             <h3 className="font-medium text-slate-900 break-words leading-tight">{task.title}</h3>
           </div>
-        </div>
-
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <button
-            type="button"
-            disabled={updating || !isOwnTask}
-            onClick={(e) => { e.stopPropagation(); isOwnTask && onCycleStatus(task); }}
-            title={!isOwnTask ? "Only the assignee can update status" : undefined}
-            className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${statusBadgeClasses(task.status)}`}
-          >
-            {updating ? <Spinner size="sm" /> : null}
-            {statusLabel(task.status)}
-          </button>
         </div>
       </div>
 

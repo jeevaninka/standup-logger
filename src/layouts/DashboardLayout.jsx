@@ -52,6 +52,7 @@ export default function DashboardLayout() {
   const navigate = useNavigate()
 
   const [profile, setProfile] = useState(null)
+  const [showMobileProfileMenu, setShowMobileProfileMenu] = useState(false)
 
   useEffect(() => {
     if (!user?.id) return
@@ -145,41 +146,86 @@ export default function DashboardLayout() {
       </div>
 
       {/* ── Mobile bottom nav ── */}
+      {showMobileProfileMenu && (
+        <div className="fixed inset-0 z-30 bg-black/20 md:hidden" onClick={() => setShowMobileProfileMenu(false)} />
+      )}
       <nav
         className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch justify-around border-t border-white/[0.06] bg-slate-950 px-1 py-2 md:hidden"
         aria-label="Primary"
       >
-        {navItems.map(({ to, label, icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              [
-                'flex flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2 text-xs font-medium transition focus:outline-none',
-                isActive ? 'text-indigo-300' : 'text-slate-500 hover:text-slate-300',
-              ].join(' ')
-            }
-            end
-          >
-            {({ isActive }) =>
-              to === '/dashboard/profile' && avatarUrl ? (
-                <>
+        {showMobileProfileMenu && (
+          <div className="absolute bottom-full right-4 mb-2 w-48 overflow-hidden rounded-xl bg-slate-800 shadow-xl ring-1 ring-white/10">
+            <div className="border-b border-white/10 px-4 py-3">
+              <p className="truncate text-sm font-medium text-white">{displayName || 'Account'}</p>
+            </div>
+            <div className="p-1">
+              <NavLink
+                to="/dashboard/profile"
+                onClick={() => setShowMobileProfileMenu(false)}
+                className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white"
+              >
+                View profile
+              </NavLink>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileProfileMenu(false)
+                  handleSignOut()
+                }}
+                className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-red-400 hover:bg-white/5 hover:text-red-300"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        )}
+        {navItems.map(({ to, label, icon }) => {
+          const isProfile = to === '/dashboard/profile'
+          
+          if (isProfile) {
+            return (
+              <button
+                key={to}
+                onClick={() => setShowMobileProfileMenu(!showMobileProfileMenu)}
+                className={`flex flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2 text-xs font-medium transition focus:outline-none ${showMobileProfileMenu ? 'text-indigo-300' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                {avatarUrl ? (
                   <img
                     src={avatarUrl}
                     alt=""
-                    className={`h-6 w-6 rounded-full object-cover ${isActive ? 'ring-2 ring-indigo-400' : 'ring-1 ring-white/10'}`}
+                    className={`h-6 w-6 rounded-full object-cover ${showMobileProfileMenu ? 'ring-2 ring-indigo-400' : 'ring-1 ring-white/10'}`}
                   />
-                  <span>{label}</span>
-                </>
-              ) : (
+                ) : (
+                  <>
+                    {createElement(icon, { className: 'h-6 w-6' })}
+                  </>
+                )}
+                <span>{label}</span>
+              </button>
+            )
+          }
+
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                [
+                  'flex flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2 text-xs font-medium transition focus:outline-none',
+                  isActive ? 'text-indigo-300' : 'text-slate-500 hover:text-slate-300',
+                ].join(' ')
+              }
+              end
+            >
+              {() => (
                 <>
                   {createElement(icon, { className: 'h-6 w-6' })}
                   <span>{label}</span>
                 </>
-              )
-            }
-          </NavLink>
-        ))}
+              )}
+            </NavLink>
+          )
+        })}
       </nav>
     </div>
   )
