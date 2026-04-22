@@ -8,7 +8,7 @@ import { logger } from '../lib/logger.js'
 import { supabase } from '../lib/supabase.js'
 import { Spinner } from '../components/Spinner.jsx'
 import { TaskStatusBadge } from '../components/TaskStatusBadge.jsx'
-import { IconClipboard, IconPencil, IconLink, IconTrash, IconBug, IconJira, IconChevronDown, IconChevronRight } from '../components/icons/index.jsx'
+import { IconClipboard, IconPencil, IconLink, IconTrash, IconBug, IconJira, IconChevronDown, IconChevronRight, IconChevronUp } from '../components/icons/index.jsx'
 import { localDateKey } from '../lib/date.js'
 import { TASK_STATUSES, nextTaskStatus, statusBadgeClasses, statusLabel } from '../lib/tasks.js'
 import { resolveProfileName } from '../lib/profile.js'
@@ -172,7 +172,7 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
   return (
     <article id={`task-${task.id}`} className={`relative flex flex-col rounded-2xl border shadow-sm ring-1 transition-all duration-300 overflow-hidden ${isFromBlocker ? 'bg-amber-100 border-l-4 border-l-amber-400 border-amber-200 ring-amber-100' : task.task_type === 'bug' ? 'bg-red-50 border-l-4 border-l-red-400 border-red-200 ring-red-100' : 'bg-white border-slate-200 ring-slate-100'} ${isExpanded ? 'max-h-[1000px]' : 'max-h-[160px]'}`}>
       {isOwnTask && !editing && (
-        <div className={`absolute top-3 right-3 flex shrink-0 items-center gap-1 z-10 transition-opacity duration-200 ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className="absolute top-3 right-3 flex shrink-0 items-center gap-1 z-10">
           <button type="button" onClick={(e) => { e.stopPropagation(); handleEditOpen(); }} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700" aria-label="Edit">
             <IconPencil className="h-4 w-4" />
           </button>
@@ -475,6 +475,14 @@ export default function Tasks() {
         return { ...prev, [targetTask.user_id]: false }
       })
       setExpandedTaskId(targetTask.id)
+      
+      // Wait for React to render the uncollapsed section, then scroll to it
+      setTimeout(() => {
+        const el = document.getElementById(`task-${targetTask.id}`)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 150)
     }
   }, [hash, tasks])
 
