@@ -58,9 +58,9 @@ export function TodayPanel() {
     if (data) setProfiles(data)
   }, [])
 
+  const metaName = user?.user_metadata?.full_name
   const loadProfile = useCallback(async () => {
     if (!userId) return
-    const metaName = user.user_metadata?.full_name
     if (metaName) setDisplayName(metaName)
     const { data } = await supabase
       .from('profiles')
@@ -68,7 +68,7 @@ export function TodayPanel() {
       .eq('id', userId)
       .maybeSingle()
     if (data?.full_name) setDisplayName(data.full_name)
-  }, [userId, user])
+  }, [userId, metaName])
 
   const loadMyStandup = useCallback(async () => {
     if (!userId) return

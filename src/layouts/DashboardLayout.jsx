@@ -11,6 +11,7 @@ import {
   IconHistory,
   IconProfile,
   IconBolt,
+  IconRefresh,
 } from '../components/icons/index.jsx'
 
 const navItems = [
@@ -86,6 +87,18 @@ export default function DashboardLayout() {
         <nav className="flex flex-1 flex-col gap-0.5 px-3 py-4">
           <NavItems compact={false} />
         </nav>
+
+        {/* Refresh Button */}
+        <div className="px-3 pb-4">
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-400/60"
+          >
+            <IconRefresh className="h-5 w-5 shrink-0" />
+            <span>Refresh</span>
+          </button>
+        </div>
 
         {/* Footer: profile + sign out */}
         <div className="border-t border-white/[0.06] p-3">

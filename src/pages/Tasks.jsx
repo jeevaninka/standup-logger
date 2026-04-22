@@ -443,7 +443,7 @@ export default function Tasks() {
         const key = TASK_STATUSES.includes(t.status) ? t.status : 'todo'
         grouped[key].push(t)
       }
-      return { uid, name, grouped, isMe: uid === userId }
+      return { uid, name, grouped, allTasks: userTasks, isMe: uid === userId }
     })
   }, [visibleTasks, profiles, userId])
 
@@ -762,30 +762,11 @@ export default function Tasks() {
           <div className="mt-8">
             <EmptyState icon={<IconClipboard className="mx-auto" />} title="No tasks found" description={activeFilter === 'archived' ? 'No archived tasks.' : 'Use + Add Task to create your first one.'} />
           </div>
-        ) : activeFilter === 'archived' ? (
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-            {visibleTasks.map(task => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onCycleStatus={handleCycleStatus}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-                statusUpdatingId={statusUpdatingId}
-                currentUserId={userId}
-                profiles={profiles}
-                expandedId={expandedTaskId}
-                onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
-                onArchive={onArchive}
-                onUnarchive={onUnarchive}
-                onEnvChange={onEnvChange}
-              />
-            ))}
-          </div>
         ) : (
           <div className="mt-8 space-y-10">
-            {userGroups.map(({ uid, name, grouped, isMe }) => {
+            {userGroups.map(({ uid, name, grouped, allTasks, isMe }) => {
               const isCollapsed = collapsedUsers[uid] ?? true
+              const taskCount = allTasks.length
               return (
               <section key={uid}>
                 {/* User heading */}
@@ -806,7 +787,7 @@ export default function Tasks() {
                       {isMe ? `${name} (you)` : name}
                     </h2>
                     <span className="text-sm text-slate-500">
-                      {Object.values(grouped).flat().length} task{Object.values(grouped).flat().length !== 1 ? 's' : ''}
+                      {taskCount} task{taskCount !== 1 ? 's' : ''}
                     </span>
                   </div>
                   <div className="text-slate-400">
@@ -814,9 +795,30 @@ export default function Tasks() {
                   </div>
                 </button>
 
-                {/* Kanban columns */}
+                {/* Content */}
                 {!isCollapsed && (
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  activeFilter === 'archived' ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+                      {allTasks.map(task => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onCycleStatus={handleCycleStatus}
+                          onDelete={handleDelete}
+                          onEdit={handleEdit}
+                          statusUpdatingId={statusUpdatingId}
+                          currentUserId={userId}
+                          profiles={profiles}
+                          expandedId={expandedTaskId}
+                          onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                          onArchive={onArchive}
+                          onUnarchive={onUnarchive}
+                          onEnvChange={onEnvChange}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     {SECTIONS.map(({ status, label, empty }) => {
                       const list = grouped[status] ?? []
                       const topBorder = status === 'todo' ? 'border-t-slate-300' : status === 'in_progress' ? 'border-t-amber-400' : 'border-t-emerald-400'
@@ -836,7 +838,7 @@ export default function Tasks() {
                               <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-bold text-slate-800">{list.length}</span>
                             </div>
                           </div>
-                          <div className="flex flex-1 flex-col gap-3">
+                          <div className="flex flex-1 flex-col gap-3 overflow-y-auto max-h-[calc(100vh-250px)] pr-1">
                             {list.length === 0 ? (
                               <p className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white/80 px-4 py-10 text-center text-sm text-slate-500">
                                 {activeFilter === 'blockers' ? 'No blocker tasks here.' : empty}
@@ -865,6 +867,7 @@ export default function Tasks() {
                       )
                     })}
                   </div>
+                  )
                 )}
               </section>
             )})}
