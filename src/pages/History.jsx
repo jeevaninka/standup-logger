@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 import { EmptyState } from '../components/EmptyState.jsx'
 import { supabase } from '../lib/supabase.js'
 import { parseLocalDate, formatCardDate } from '../lib/date.js'
 import { resolveProfileName, getInitials } from '../lib/profile.js'
-import { IconLink, IconHistory, IconChevronDown, IconChevronRight } from '../components/icons/index.jsx'
+import { IconLink, IconHistory, IconChevronDown, IconChevronRight, IconExternalLink } from '../components/icons/index.jsx'
 import { TaskStatusBadge } from '../components/TaskStatusBadge.jsx'
 
 const inputFocus =
@@ -102,8 +103,14 @@ function HistoryCard({ row, linkedTasks, defaultExpanded }) {
                           linkedTasks[b].map((task) => (
                             <div key={task.id} className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-amber-800">
-                                  → Picked up by <span className="font-medium text-amber-900">{resolveProfileName(task.profiles)}</span>
+                                <span className="text-xs text-amber-800 flex items-center gap-1">
+                                  → Picked up by{' '}
+                                  <Link to={`/dashboard/tasks#task-${task.id}`} className="font-medium text-amber-900 hover:underline">
+                                    {resolveProfileName(task.profiles)}
+                                  </Link>
+                                  <Link to={`/dashboard/tasks#task-${task.id}`} className="text-amber-600 hover:text-amber-800 transition-colors ml-1" title="Open in Tasks">
+                                    <IconExternalLink className="h-3.5 w-3.5" />
+                                  </Link>
                                 </span>
                               </div>
                               <TaskStatusBadge status={task.status} />

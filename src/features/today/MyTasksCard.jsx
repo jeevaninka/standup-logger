@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Spinner } from '../../components/Spinner.jsx'
 import { TaskStatusBadge } from '../../components/TaskStatusBadge.jsx'
-import { IconLink } from '../../components/icons/index.jsx'
+import { IconLink, IconExternalLink } from '../../components/icons/index.jsx'
 
 function TaskCycleButton({ status, onClick }) {
   const map = {
@@ -115,17 +116,22 @@ export function MyTasksCard({
                 >
                   <TaskCycleButton status={task.status} onClick={() => onCycleTaskStatus(task)} />
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span
-                      className={`text-sm leading-snug ${
-                        task.status === 'done'
-                          ? 'text-slate-400 line-through'
-                          : task.status === 'in_progress'
-                            ? 'font-medium text-slate-900'
-                            : 'text-slate-700'
-                      }`}
-                    >
-                      {task.title}
-                    </span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={`text-sm leading-snug ${
+                          task.status === 'done'
+                            ? 'text-slate-400 line-through'
+                            : task.status === 'in_progress'
+                              ? 'font-medium text-slate-900'
+                              : 'text-slate-700'
+                        }`}
+                      >
+                        {task.title}
+                      </span>
+                      <Link to={`/dashboard/tasks#task-${task.id}`} className="text-slate-400 hover:text-blue-600 transition-colors" title="Open in Tasks">
+                        <IconExternalLink className="h-4 w-4" />
+                      </Link>
+                    </div>
                     <div className="flex items-center gap-2">
                       <TaskStatusBadge status={task.status} />
                       {isBlockerTask && (

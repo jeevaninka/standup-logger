@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Spinner } from '../../components/Spinner.jsx'
+import { IconExternalLink } from '../../components/icons/index.jsx'
 import { TaskStatusBadge } from '../../components/TaskStatusBadge.jsx'
 import { resolveProfileName } from '../../lib/profile.js'
 
@@ -169,10 +170,13 @@ export function StandupCard({
                             linkedTasks.map((task) => (
                               <div key={task.id} className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs text-amber-800">
+                                  <span className="text-xs text-amber-800 flex items-center gap-1">
                                     → Picked up by{' '}
-                                    <Link to={`/dashboard/tasks#task-${task.id}`} className="font-medium text-amber-900 hover:underline">
+                                    <span className="font-medium text-amber-900">
                                       {resolveProfileName(task.profiles ?? profiles.find(p => p.id === task.user_id))}
+                                    </span>
+                                    <Link to={`/dashboard/tasks#task-${task.id}`} className="text-amber-600 hover:text-amber-800 transition-colors ml-1" title="Open in Tasks">
+                                      <IconExternalLink className="h-3.5 w-3.5" />
                                     </Link>
                                   </span>
                                 </div>

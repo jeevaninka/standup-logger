@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { TaskStatusBadge } from '../../components/TaskStatusBadge.jsx'
 import { Spinner } from '../../components/Spinner.jsx'
 import { EmptyState } from '../../components/EmptyState.jsx'
-import { IconUsers, IconLink, IconArrowRight, IconChevronDown, IconChevronRight } from '../../components/icons/index.jsx'
+import { IconUsers, IconLink, IconArrowRight, IconChevronDown, IconChevronRight, IconExternalLink } from '../../components/icons/index.jsx'
 import { resolveProfileName, getInitials } from '../../lib/profile.js'
 
 const inputFocus =
@@ -53,10 +53,13 @@ function BlockerItem({
           linkedTasks.map((task) => (
             <div key={task.id} className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-amber-800">
+                <span className="text-xs text-amber-800 flex items-center gap-1">
                   → Picked up by{' '}
                   <Link to={`/dashboard/tasks#task-${task.id}`} className="font-medium text-amber-900 hover:underline">
                     {resolveProfileName(task.profiles)}
+                  </Link>
+                  <Link to={`/dashboard/tasks#task-${task.id}`} className="text-amber-600 hover:text-amber-800 transition-colors ml-1" title="Open in Tasks">
+                    <IconExternalLink className="h-3.5 w-3.5" />
                   </Link>
                 </span>
               </div>

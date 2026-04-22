@@ -54,8 +54,6 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
   const isOwnTask = task.user_id === currentUserId
 
   const [editing, setEditing] = useState(false)
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [showHistory, setShowHistory] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
   const [editDue, setEditDue] = useState(task.due_date ?? '')
   const [editAssignee, setEditAssignee] = useState(task.user_id ?? '')
@@ -169,7 +167,7 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
   }
 
   return (
-    <article id={`task-${task.id}`} className={`relative flex flex-col rounded-2xl border p-4 shadow-sm ring-1 transition-all duration-200 ${isFromBlocker ? 'bg-amber-100 border-l-4 border-l-amber-400 border-amber-200 ring-amber-100' : task.task_type === 'bug' ? 'bg-red-50 border-l-4 border-l-red-400 border-red-200 ring-red-100' : 'bg-white border-slate-200 ring-slate-100'} ${isExpanded ? 'h-auto' : ''}`}>
+    <article id={`task-${task.id}`} className={`relative flex flex-col rounded-2xl border p-4 shadow-sm ring-1 transition-all duration-200 h-auto ${isFromBlocker ? 'bg-amber-100 border-l-4 border-l-amber-400 border-amber-200 ring-amber-100' : task.task_type === 'bug' ? 'bg-red-50 border-l-4 border-l-red-400 border-red-200 ring-red-100' : 'bg-white border-slate-200 ring-slate-100'}`}>
       {isFromBlocker && (
         <div className="mb-2 flex items-center gap-1.5 shrink-0">
           <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
@@ -194,7 +192,7 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
               </span>
             )}
           </div>
-          <h3 className={`font-medium text-slate-900 break-words leading-tight ${isExpanded ? '' : 'line-clamp-2'}`}>{task.title}</h3>
+          <h3 className="font-medium text-slate-900 break-words leading-tight">{task.title}</h3>
         </div>
         {isOwnTask && (
           <div className="flex shrink-0 items-center gap-1">
@@ -242,47 +240,23 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
         )}
       </div>
 
-      {isExpanded && (
-        <>
-          {task.assignee_history && task.assignee_history.length > 1 && (
-            <div className="mt-3 border-t border-slate-100 pt-3">
-              <button
-                type="button"
-                onClick={() => setShowHistory(!showHistory)}
-                className="text-[11px] font-medium text-indigo-600 hover:text-indigo-700 transition focus:outline-none focus:underline"
-              >
-                {showHistory ? 'Hide history' : 'Show history'}
-              </button>
-              {showHistory && (
-                <div className="mt-2 text-[10px] text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                  {task.assignee_history.map((h, i) => {
-                    const isLast = i === task.assignee_history.length - 1
-                    const name = resolveProfileName(profiles.find(p => p.id === h.uid)) || 'Unknown'
-                    return (
-                      <span key={i}>
-                        {name}
-                        {!isLast && ' → '}
-                      </span>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </>
+      {task.assignee_history && task.assignee_history.length > 1 && (
+        <div className="mt-3 border-t border-slate-100 pt-3">
+          <div className="text-[10px] text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100">
+            <span className="font-medium text-slate-600 mb-1 block">History:</span>
+            {task.assignee_history.map((h, i) => {
+              const isLast = i === task.assignee_history.length - 1
+              const name = resolveProfileName(profiles.find(p => p.id === h.uid)) || 'Unknown'
+              return (
+                <span key={i}>
+                  {name}
+                  {!isLast && ' → '}
+                </span>
+              )
+            })}
+          </div>
+        </div>
       )}
-
-      {/* Expand/Collapse Chevron */}
-      <div className="mt-auto pt-2 flex justify-center border-t border-slate-100/50">
-        <button
-          type="button"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="p-1 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
-          aria-label={isExpanded ? "Collapse card" : "Expand card"}
-        >
-          {isExpanded ? <IconChevronUp className="h-4 w-4" /> : <IconChevronDown className="h-4 w-4" />}
-        </button>
-      </div>
     </article>
   )
 }
@@ -317,7 +291,7 @@ export default function Tasks() {
   const [selectedUserFilter, setSelectedUserFilter] = useState('all')
 
   const loadProfiles = useCallback(async () => {
-    const { data } = await supabase.from('profiles').select('id, full_name')
+    const { data } = await supabase.from('profiles').select('id, full_name, avatar_url')
     if (data) setProfiles(data)
   }, [])
 
@@ -664,9 +638,13 @@ export default function Tasks() {
                   className="mb-4 flex w-full items-center justify-between gap-3 rounded-lg bg-slate-200/50 px-4 py-3 text-left transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white">
-                      {name.slice(0, 2).toUpperCase()}
-                    </div>
+                    {profiles.find(p => p.id === uid)?.avatar_url ? (
+                      <img src={profiles.find(p => p.id === uid).avatar_url} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-slate-200" />
+                    ) : (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white">
+                        {name.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
                     <h2 className="text-base font-semibold text-slate-900">
                       {isMe ? `${name} (you)` : name}
                     </h2>
