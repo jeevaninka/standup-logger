@@ -170,9 +170,9 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
   }
 
   return (
-    <article id={`task-${task.id}`} className={`relative flex flex-col rounded-2xl border p-4 shadow-sm ring-1 transition-all duration-200 ${!isExpanded ? 'h-[160px] overflow-hidden' : 'h-auto'} ${isFromBlocker ? 'bg-amber-100 border-l-4 border-l-amber-400 border-amber-200 ring-amber-100' : task.task_type === 'bug' ? 'bg-red-50 border-l-4 border-l-red-400 border-red-200 ring-red-100' : 'bg-white border-slate-200 ring-slate-100'}`}>
+    <article id={`task-${task.id}`} className={`relative flex flex-col rounded-2xl border shadow-sm ring-1 transition-all duration-300 overflow-hidden ${isFromBlocker ? 'bg-amber-100 border-l-4 border-l-amber-400 border-amber-200 ring-amber-100' : task.task_type === 'bug' ? 'bg-red-50 border-l-4 border-l-red-400 border-red-200 ring-red-100' : 'bg-white border-slate-200 ring-slate-100'} ${isExpanded ? 'max-h-[1000px]' : 'max-h-[160px]'}`}>
       {isOwnTask && !editing && (
-        <div className="absolute top-3 right-3 flex shrink-0 items-center gap-1 z-10">
+        <div className={`absolute top-3 right-3 flex shrink-0 items-center gap-1 z-10 transition-opacity duration-200 ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <button type="button" onClick={(e) => { e.stopPropagation(); handleEditOpen(); }} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700" aria-label="Edit">
             <IconPencil className="h-4 w-4" />
           </button>
@@ -181,7 +181,7 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
           </button>
         </div>
       )}
-      <div className="cursor-pointer" onClick={onToggleExpand}>
+      <div className="cursor-pointer p-4 pb-2" onClick={onToggleExpand}>
         {isFromBlocker && (
           <div className="mb-2 flex items-center gap-1.5 shrink-0 pr-14">
             <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
@@ -234,8 +234,8 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
         </div>
       </div>
 
-      {isExpanded && (
-        <div className="mt-4 pt-4 border-t border-slate-200 flex flex-col gap-3">
+      <div className={`px-4 pb-4 transition-all duration-300 ease-in-out ${isExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
+        <div className="pt-4 border-t border-slate-200/60 flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-end gap-2">
             <div className="flex items-center gap-2">
               <label className="text-xs text-slate-500">Env:</label>
@@ -314,7 +314,18 @@ function TaskCard({ task, onCycleStatus, onDelete, onEdit, statusUpdatingId, cur
             )}
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Expand/Collapse Chevron */}
+      <div className="mt-auto pt-2 pb-2 flex justify-center border-t border-slate-100/50 cursor-pointer" onClick={onToggleExpand}>
+        <button
+          type="button"
+          className="p-1 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+          aria-label={isExpanded ? "Collapse card" : "Expand card"}
+        >
+          {isExpanded ? <IconChevronUp className="h-4 w-4" /> : <IconChevronDown className="h-4 w-4" />}
+        </button>
+      </div>
     </article>
   )
 }
@@ -752,7 +763,7 @@ export default function Tasks() {
             <EmptyState icon={<IconClipboard className="mx-auto" />} title="No tasks found" description={activeFilter === 'archived' ? 'No archived tasks.' : 'Use + Add Task to create your first one.'} />
           </div>
         ) : activeFilter === 'archived' ? (
-          <div className="mt-8 flex flex-col gap-3">
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
             {visibleTasks.map(task => (
               <TaskCard
                 key={task.id}
